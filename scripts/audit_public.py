@@ -23,6 +23,8 @@ PATTERNS = [
 
 def should_skip(path: Path) -> bool:
     relative = path.relative_to(ROOT)
+    if relative.as_posix() == ".gitignore":
+        return True
     if any(part in IGNORED_PARTS for part in relative.parts):
         return True
     if path.suffix.lower() in IGNORED_SUFFIXES:
