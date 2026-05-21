@@ -1,6 +1,6 @@
 # Wiki Index
 
-Generated: 2026-05-20
+Generated: 2026-05-21
 
 - [Raw Vs Compiled Knowledge](Wiki/Concepts/raw-vs-compiled-knowledge.md) - `concept`
 - [Initial Demo Ingest](Wiki/Logs/initial-demo-ingest.md) - `log`
