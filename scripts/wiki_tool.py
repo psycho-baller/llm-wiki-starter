@@ -590,7 +590,12 @@ def cmd_youtube_triage(args: argparse.Namespace) -> int:
         if not paths:
             print("no YouTube sources to triage")
             return 0
-        config = ProviderConfig(provider=args.provider, model=args.model, timeout=args.timeout)
+        config = ProviderConfig(
+            provider=args.provider,
+            model=args.model,
+            timeout=args.timeout,
+            max_body_chars=args.max_body_chars,
+        )
         for path in paths:
             result = triage_source(
                 root=ROOT,
@@ -704,6 +709,7 @@ def build_parser() -> argparse.ArgumentParser:
     triage.add_argument("--model", help="Optional provider model override")
     triage.add_argument("--limit", type=int, help="Maximum pending sources to triage")
     triage.add_argument("--timeout", type=int, default=300, help="Provider timeout in seconds")
+    triage.add_argument("--max-body-chars", type=int, help="Optional cap for source body characters; default passes the full body")
     triage.add_argument("--dry-run", action="store_true", help="Print provider result without editing files")
     triage.add_argument("--no-build", action="store_true", help="Do not rebuild catalog or source manifest after updates")
     triage.set_defaults(func=cmd_youtube_triage)

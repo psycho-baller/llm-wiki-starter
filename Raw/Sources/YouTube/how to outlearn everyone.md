@@ -1,16 +1,29 @@
 ---
-title: "how to outlearn everyone"
+title: how to outlearn everyone
 author:
-  - "[[Alex Hormozi]]"
+  - [[Alex Hormozi]]
 url: "https://www.youtube.com/watch?v=q9qBqnhdWKw"
 tags:
-  - "source"
-source_type: "youtube"
-processed: "false"
-decision: "pending"
+  - source
+source_type: youtube
+processed: false
+decision: skim
 published: 2025-12-18
 created: 2026-05-20
+relevance_score: 4
+actionability_score: 4
+novelty_score: 2
+credibility_score: 3
+density_score: 3
+personal_resonance_score: 5
+redundancy_risk: high
+time_cost: medium
+clickbait_risk: medium
+triage_reason: "Relevant to Rami's learning philosophy, but the core ideas in the excerpt are familiar: learning as behavior change, compressing iteration cycles, and decomposing skills. Hormozi may offer a few useful frames, but the packaging is achievement-heavy and likely overlaps with Rami's existing applied-knowledge stance."
+expected_gain: A lightweight reminder to define learning by changed behavior and increase iteration speed on active projects, especially building, content, and social practice. Best value is extracting one or two operational prompts rather than watching end to end.
+combined_score: 43
 ---
+
 ![](https://www.youtube.com/watch?v=q9qBqnhdWKw)
 
 ## Transcript
@@ -220,3 +233,25 @@ created: 2026-05-20
 **30:01** · And I think that's something I'll rest my case on that. I think I'll rip on that. So, hope you guys dug that.
 
 **30:09** · That's how we learn anything. Um, at least that's how I learned
+
+## Triage Notes
+
+- Decision: `skim`
+- Combined score: `43`
+- Relevance: `4`
+- Actionability: `4`
+- Novelty: `2`
+- Credibility: `3`
+- Density: `3`
+- Personal resonance: `5`
+- Redundancy risk: `high`
+- Time cost: `medium`
+- Clickbait risk: `medium`
+
+### Triage Reason
+
+Relevant to Rami's learning philosophy, but the core ideas in the excerpt are familiar: learning as behavior change, compressing iteration cycles, and decomposing skills. Hormozi may offer a few useful frames, but the packaging is achievement-heavy and likely overlaps with Rami's existing applied-knowledge stance.
+
+### Expected Gain
+
+A lightweight reminder to define learning by changed behavior and increase iteration speed on active projects, especially building, content, and social practice. Best value is extracting one or two operational prompts rather than watching end to end.

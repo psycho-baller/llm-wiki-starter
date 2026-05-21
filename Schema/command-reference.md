@@ -51,11 +51,14 @@ python3 scripts/wiki_tool.py youtube-triage --pending
 python3 scripts/wiki_tool.py youtube-triage --pending --provider gemini
 python3 scripts/wiki_tool.py youtube-triage Raw/Sources/YouTube/example.md --provider claude --model sonnet
 python3 scripts/wiki_tool.py youtube-triage --pending --provider manual
+python3 scripts/wiki_tool.py youtube-triage --pending --max-body-chars 50000
 ```
 
 `youtube-triage` uses Codex by default. Supported providers are `codex`, `gemini`, `claude`, and `manual`.
 
 The AI provider only returns structured JSON. `scripts/wiki_tool.py` validates the output against `Schema/youtube-triage-schema.json`, calculates `combined_score`, writes the scoring fields into the Raw source frontmatter, updates the `## Triage Notes` body section, rebuilds generated Wiki artifacts, and runs source lint.
+
+By default, YouTube triage passes the full note body/transcript to the AI provider. Use `--max-body-chars` only when you deliberately want to cap prompt size.
 
 Set `RAMI_CONTEXT_PATH` to inject Rami's personal context into the triage prompt. The tool reads this from the shell environment or an ignored root `.env` file.
 

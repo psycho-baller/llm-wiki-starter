@@ -38,6 +38,7 @@ class ProviderConfig:
     provider: str = "codex"
     model: str | None = None
     timeout: int = 300
+    max_body_chars: int | None = None
 
 
 def parse_scalar(value: str) -> Any:
@@ -228,15 +229,21 @@ def load_rami_context(root: Path, max_chars: int = 8000) -> str:
     return text[:max_chars].rsplit("\n", 1)[0].strip() + "\n\n[context truncated]"
 
 
-def body_excerpt(body: str, max_chars: int = 6000) -> str:
+def body_excerpt(body: str, max_chars: int | None = None) -> str:
     body = body.strip()
+    if max_chars is None or max_chars <= 0:
+        return body
     if len(body) <= max_chars:
         return body
     return body[:max_chars].rsplit("\n", 1)[0].strip() + "\n\n[excerpt truncated]"
 
 
 def build_prompt(
-    source_path: Path, frontmatter: dict[str, Any], body: str, rami_context: str
+    source_path: Path,
+    frontmatter: dict[str, Any],
+    body: str,
+    rami_context: str,
+    max_body_chars: int | None = None,
 ) -> str:
     return textwrap.dedent(
         f"""
@@ -264,7 +271,7 @@ def build_prompt(
         {rami_context}
 
         Source body, description, transcript, or excerpt:
-        {body_excerpt(body)}
+        {body_excerpt(body, max_chars=max_body_chars)}
         """
     ).strip().replace("\n        ", "\n")
 
@@ -424,7 +431,11 @@ def triage_source(
     if str(frontmatter.get("source_type", "")) != "youtube":
         raise TriageError(f"{source_path} is not a YouTube source")
     prompt = build_prompt(
-        source_path.relative_to(root), frontmatter, body, load_rami_context(root)
+        source_path.relative_to(root),
+        frontmatter,
+        body,
+        load_rami_context(root),
+        max_body_chars=config.max_body_chars,
     )
     if config.provider == "manual":
         return {"prompt": prompt}
