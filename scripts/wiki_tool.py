@@ -6,10 +6,13 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
+
+from youtube_triage import ProviderConfig, TriageError, triage_source
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +21,7 @@ WIKI = ROOT / "Wiki"
 SCHEMA = ROOT / "Schema"
 CATALOG = WIKI / "catalog.jsonl"
 MANIFEST = SCHEMA / "source-manifest.jsonl"
+YOUTUBE_TRIAGE_SCHEMA = SCHEMA / "youtube-triage-schema.json"
 ALLOWED_TAGS = {"topic", "concept", "entity", "project", "log"}
 ALLOWED_ORIGINS = {"external", "personal", "mixed"}
 SOURCE_TYPE_ORIGINS = {
@@ -520,6 +524,89 @@ def cmd_source_coverage(_args: argparse.Namespace) -> int:
     return 0
 
 
+def youtube_sources(decision: str | None = None) -> list[Path]:
+    matches: list[Path] = []
+    for path in source_files():
+        fm, _body = parse_frontmatter(read_text(path))
+        if str(fm.get("source_type", "")) != "youtube":
+            continue
+        if decision is not None and str(fm.get("decision", "pending")) != decision:
+            continue
+        matches.append(path)
+    return sorted(matches)
+
+
+def resolve_source_arg(path_text: str) -> Path:
+    path = Path(path_text)
+    if not path.is_absolute():
+        path = ROOT / path
+    if not path.exists():
+        raise WikiError(f"source path does not exist: {path_text}")
+    return path
+
+
+def cmd_youtube_pending(args: argparse.Namespace) -> int:
+    matches = youtube_sources(decision="pending")
+    if args.json:
+        rows = []
+        for path in matches:
+            fm, _body = parse_frontmatter(read_text(path))
+            rows.append(
+                {
+                    "path": rel(path),
+                    "title": str(fm.get("title", "")),
+                    "author": str(fm.get("author", "")),
+                    "url": str(fm.get("url", "")),
+                    "created": str(fm.get("created", "")),
+                }
+            )
+        print(json.dumps(rows, indent=2, sort_keys=True))
+        return 0
+    for path in matches:
+        print(rel(path))
+    if not matches:
+        print("no pending YouTube sources")
+    return 0
+
+
+def cmd_youtube_triage(args: argparse.Namespace) -> int:
+    try:
+        paths = [resolve_source_arg(path) for path in args.paths]
+        if args.pending or not paths:
+            pending = youtube_sources(decision="pending")
+            if args.limit:
+                pending = pending[: args.limit]
+            paths.extend(path for path in pending if path not in paths)
+        if not paths:
+            print("no YouTube sources to triage")
+            return 0
+        config = ProviderConfig(provider=args.provider, model=args.model, timeout=args.timeout)
+        for path in paths:
+            result = triage_source(
+                root=ROOT,
+                source_path=path,
+                schema_path=YOUTUBE_TRIAGE_SCHEMA,
+                config=config,
+                dry_run=args.dry_run,
+            )
+            if args.provider == "manual":
+                print(f"--- prompt for {rel(path)} ---")
+                print(result["prompt"])
+                continue
+            if args.dry_run:
+                print(json.dumps({"path": rel(path), "result": result}, indent=2, sort_keys=True))
+            else:
+                print(f"{rel(path)} -> {result['decision']} ({result['combined_score']})")
+        if not args.dry_run and args.provider != "manual" and not args.no_build:
+            cmd_build(argparse.Namespace())
+            cmd_source_scan(argparse.Namespace(update=True, accept_covered=True))
+            return cmd_source_lint(argparse.Namespace())
+        return 0
+    except (TriageError, WikiError, subprocess.TimeoutExpired) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+
 def searchable_text(entry: dict[str, Any]) -> str:
     parts = [
         str(entry.get("path", "")),
@@ -597,6 +684,19 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("source-lint").set_defaults(func=cmd_source_lint)
     sub.add_parser("source-delta").set_defaults(func=cmd_source_delta)
     sub.add_parser("source-coverage").set_defaults(func=cmd_source_coverage)
+    pending = sub.add_parser("youtube-pending")
+    pending.add_argument("--json", action="store_true", help="Print pending YouTube sources as JSON")
+    pending.set_defaults(func=cmd_youtube_pending)
+    triage = sub.add_parser("youtube-triage")
+    triage.add_argument("paths", nargs="*", help="Specific Raw/Sources YouTube files to triage")
+    triage.add_argument("--pending", action="store_true", help="Triage all pending YouTube sources")
+    triage.add_argument("--provider", choices=["codex", "gemini", "claude", "manual"], default="codex")
+    triage.add_argument("--model", help="Optional provider model override")
+    triage.add_argument("--limit", type=int, help="Maximum pending sources to triage")
+    triage.add_argument("--timeout", type=int, default=300, help="Provider timeout in seconds")
+    triage.add_argument("--dry-run", action="store_true", help="Print provider result without editing files")
+    triage.add_argument("--no-build", action="store_true", help="Do not rebuild catalog or source manifest after updates")
+    triage.set_defaults(func=cmd_youtube_triage)
     search = sub.add_parser("search-catalog")
     search.add_argument("--query", required=True)
     search.set_defaults(func=cmd_search_catalog)

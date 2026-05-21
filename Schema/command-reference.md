@@ -38,6 +38,25 @@ python3 scripts/wiki_tool.py source-coverage
 
 Lists Raw sources, updates `Schema/source-manifest.jsonl`, shows manifest deltas, and reports which Wiki notes cover each source.
 
+## YouTube Triage Schema
+
+`Schema/youtube-triage-schema.json` defines the structured output expected from AI-backed YouTube triage providers such as Codex, Gemini, or Claude.
+
+## YouTube Triage
+
+```bash
+python3 scripts/wiki_tool.py youtube-pending
+python3 scripts/wiki_tool.py youtube-pending --json
+python3 scripts/wiki_tool.py youtube-triage --pending
+python3 scripts/wiki_tool.py youtube-triage --pending --provider gemini
+python3 scripts/wiki_tool.py youtube-triage Raw/Sources/Youtube/example.md --provider claude --model sonnet
+python3 scripts/wiki_tool.py youtube-triage --pending --provider manual
+```
+
+`youtube-triage` uses Codex by default. Supported providers are `codex`, `gemini`, `claude`, and `manual`.
+
+The AI provider only returns structured JSON. `scripts/wiki_tool.py` validates the output against `Schema/youtube-triage-schema.json`, writes the scoring fields into the Raw source frontmatter, updates the `## Triage Notes` body section, rebuilds generated Wiki artifacts, and runs source lint.
+
 ## Search
 
 ```bash

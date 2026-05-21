@@ -1,0 +1,96 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "relevance_score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "actionability_score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "novelty_score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "credibility_score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "density_score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "personal_resonance_score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "redundancy_risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "time_cost": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "clickbait_risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "combined_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "skip",
+        "watch",
+        "skim",
+        "process",
+        "later"
+      ]
+    },
+    "triage_reason": {
+      "type": "string"
+    },
+    "expected_gain": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "relevance_score",
+    "actionability_score",
+    "novelty_score",
+    "credibility_score",
+    "density_score",
+    "personal_resonance_score",
+    "redundancy_risk",
+    "time_cost",
+    "clickbait_risk",
+    "combined_score",
+    "decision",
+    "triage_reason",
+    "expected_gain"
+  ]
+}
