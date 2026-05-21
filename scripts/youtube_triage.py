@@ -25,6 +25,7 @@ RISK_FIELDS = ("redundancy_risk", "time_cost", "clickbait_risk")
 TEXT_FIELDS = ("triage_reason", "expected_gain")
 DECISIONS = {"skip", "watch", "skim", "process", "later"}
 RISK_LEVELS = {"low", "medium", "high"}
+RISK_PENALTIES = {"low": 0, "medium": 2, "high": 4}
 
 
 class TriageError(Exception):
@@ -169,6 +170,13 @@ def validate_result(result: dict[str, Any], schema: dict[str, Any]) -> dict[str,
     return result
 
 
+def calculate_combined_score(result: dict[str, Any]) -> int:
+    positive_score = sum(int(result[field]) for field in SCORE_FIELDS)
+    penalty = sum(RISK_PENALTIES[str(result[field])] for field in RISK_FIELDS)
+    adjusted_score = max(0, positive_score - penalty)
+    return round((adjusted_score / 30) * 100)
+
+
 def body_excerpt(body: str, max_chars: int = 6000) -> str:
     body = body.strip()
     if len(body) <= max_chars:
@@ -182,6 +190,7 @@ def build_prompt(source_path: Path, frontmatter: dict[str, Any], body: str) -> s
         You are scoring whether a YouTube video is worth watching for Rami.
 
         Do not edit files. Do not run commands. Return only valid JSON matching the provided schema.
+        Do not include combined_score. It is calculated deterministically by the Python tooling.
 
         Evaluate whether this video beats the opportunity cost of Rami's attention. Optimize for behavior change, useful judgment, story material, reusable frameworks, and actionability. Be skeptical of redundancy, vague motivation, clickbait, and low-density content. Do not over-score a video just because it is relevant.
 
@@ -342,6 +351,7 @@ def triage_source(
         return {"prompt": prompt}
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     result = validate_result(run_provider(root, schema_path, prompt, config), schema)
+    result["combined_score"] = calculate_combined_score(result)
     if dry_run:
         return result
     updated_frontmatter = dict(frontmatter)

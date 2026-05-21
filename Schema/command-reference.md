@@ -40,7 +40,7 @@ Lists Raw sources, updates `Schema/source-manifest.jsonl`, shows manifest deltas
 
 ## YouTube Triage Schema
 
-`Schema/youtube-triage-schema.json` defines the structured output expected from AI-backed YouTube triage providers such as Codex, Gemini, or Claude.
+`Schema/youtube-triage-schema.json` defines the structured output expected from AI-backed YouTube triage providers such as Codex, Gemini, or Claude. Providers return the individual scores, risks, decision, `triage_reason`, and `expected_gain`; `combined_score` is calculated deterministically by Python.
 
 ## YouTube Triage
 
@@ -49,13 +49,13 @@ python3 scripts/wiki_tool.py youtube-pending
 python3 scripts/wiki_tool.py youtube-pending --json
 python3 scripts/wiki_tool.py youtube-triage --pending
 python3 scripts/wiki_tool.py youtube-triage --pending --provider gemini
-python3 scripts/wiki_tool.py youtube-triage Raw/Sources/Youtube/example.md --provider claude --model sonnet
+python3 scripts/wiki_tool.py youtube-triage Raw/Sources/YouTube/example.md --provider claude --model sonnet
 python3 scripts/wiki_tool.py youtube-triage --pending --provider manual
 ```
 
 `youtube-triage` uses Codex by default. Supported providers are `codex`, `gemini`, `claude`, and `manual`.
 
-The AI provider only returns structured JSON. `scripts/wiki_tool.py` validates the output against `Schema/youtube-triage-schema.json`, writes the scoring fields into the Raw source frontmatter, updates the `## Triage Notes` body section, rebuilds generated Wiki artifacts, and runs source lint.
+The AI provider only returns structured JSON. `scripts/wiki_tool.py` validates the output against `Schema/youtube-triage-schema.json`, calculates `combined_score`, writes the scoring fields into the Raw source frontmatter, updates the `## Triage Notes` body section, rebuilds generated Wiki artifacts, and runs source lint.
 
 ## Search
 

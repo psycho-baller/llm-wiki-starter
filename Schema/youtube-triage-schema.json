@@ -56,11 +56,6 @@
         "high"
       ]
     },
-    "combined_score": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 100
-    },
     "decision": {
       "type": "string",
       "enum": [
@@ -88,7 +83,6 @@
     "redundancy_risk",
     "time_cost",
     "clickbait_risk",
-    "combined_score",
     "decision",
     "triage_reason",
     "expected_gain"

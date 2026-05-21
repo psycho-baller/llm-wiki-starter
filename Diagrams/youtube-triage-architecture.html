@@ -1,0 +1,1194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YouTube Triage Architecture</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
+      integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"
+      integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      :root {
+        --bg: #020617;
+        --panel: #0f172a;
+        --panel-2: #111827;
+        --line: #1e293b;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --cyan: #22d3ee;
+        --emerald: #34d399;
+        --violet: #a78bfa;
+        --amber: #fbbf24;
+        --rose: #fb7185;
+        --orange: #fb923c;
+        --slate: #94a3b8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(
+            circle at top left,
+            rgba(34, 211, 238, 0.12),
+            transparent 36%
+          ),
+          radial-gradient(
+            circle at bottom right,
+            rgba(167, 139, 250, 0.1),
+            transparent 34%
+          ),
+          var(--bg);
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .container {
+        width: min(1180px, calc(100vw - 48px));
+        margin: 0 auto;
+        padding: 32px 0 28px;
+      }
+
+      .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 18px;
+      }
+
+      .title-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .pulse {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--emerald);
+        box-shadow: 0 0 0 rgba(52, 211, 153, 0.7);
+        animation: pulse 1.8s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(52, 211, 153, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+        }
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.2;
+        letter-spacing: -0.04em;
+      }
+
+      .subtitle {
+        margin: 8px 0 0 22px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+        max-width: 820px;
+      }
+
+      .toolbar {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 20;
+      }
+
+      .toolbar-toggle,
+      .toolbar button {
+        border: 1px solid rgba(148, 163, 184, 0.24);
+        background: rgba(15, 23, 42, 0.88);
+        color: var(--text);
+        font-family: inherit;
+        font-size: 11px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          border-color 160ms ease,
+          background 160ms ease;
+      }
+
+      .toolbar-toggle {
+        width: 34px;
+        height: 34px;
+        line-height: 1;
+      }
+
+      .toolbar-actions {
+        display: none;
+        gap: 8px;
+        position: absolute;
+        right: 42px;
+        top: 0;
+        white-space: nowrap;
+      }
+
+      .toolbar.open .toolbar-actions {
+        display: flex;
+      }
+
+      .toolbar button:not(.toolbar-toggle) {
+        padding: 9px 10px;
+      }
+
+      .toolbar button:hover {
+        border-color: rgba(34, 211, 238, 0.65);
+        background: rgba(8, 51, 68, 0.78);
+      }
+
+      .diagram-card {
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 18px;
+        background: rgba(15, 23, 42, 0.72);
+        box-shadow: 0 22px 80px rgba(0, 0, 0, 0.32);
+        overflow: hidden;
+      }
+
+      svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 16px;
+      }
+
+      .card {
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 14px;
+        background: rgba(15, 23, 42, 0.72);
+        padding: 16px;
+        min-height: 138px;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .card-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+      }
+
+      .card-dot.cyan {
+        background: var(--cyan);
+      }
+      .card-dot.emerald {
+        background: var(--emerald);
+      }
+      .card-dot.violet {
+        background: var(--violet);
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 12px;
+        letter-spacing: -0.02em;
+      }
+
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      li {
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.7;
+      }
+
+      .footer {
+        color: #64748b;
+        font-size: 9px;
+        text-align: center;
+        margin-top: 16px;
+      }
+
+      @media (max-width: 860px) {
+        .container {
+          width: min(100vw - 24px, 1180px);
+          padding-top: 20px;
+        }
+
+        .header {
+          flex-direction: column;
+        }
+
+        .toolbar-actions {
+          left: 42px;
+          right: auto;
+        }
+
+        .cards {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media print {
+        .toolbar {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="report-container">
+      <header class="header">
+        <div>
+          <div class="title-row">
+            <div class="pulse"></div>
+            <h1>YouTube Triage Architecture</h1>
+          </div>
+          <p class="subtitle">
+            AI-backed filtering pipeline for deciding whether clipped YouTube
+            videos should be skipped, skimmed, watched, processed into Wiki
+            notes, or deferred.
+          </p>
+        </div>
+        <div class="toolbar" aria-label="Export toolbar">
+          <div class="toolbar-actions">
+            <button type="button" onclick="copyAsImage()">📋 Copy</button>
+            <button type="button" onclick="downloadPNG()">🖼️ PNG</button>
+            <button type="button" onclick="downloadPDF()">📄 PDF</button>
+          </div>
+          <button
+            class="toolbar-toggle"
+            type="button"
+            onclick="toggleToolbar()"
+            aria-label="Toggle export actions"
+          >
+            ⋯
+          </button>
+        </div>
+      </header>
+
+      <main class="diagram-card">
+        <svg
+          viewBox="0 0 1120 760"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-label="YouTube triage architecture diagram"
+        >
+          <defs>
+            <pattern
+              id="grid"
+              width="40"
+              height="40"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 40 0 L 0 0 0 40"
+                fill="none"
+                stroke="#1e293b"
+                stroke-width="0.5"
+              />
+            </pattern>
+            <marker
+              id="arrowhead"
+              markerWidth="10"
+              markerHeight="7"
+              refX="9"
+              refY="3.5"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+            </marker>
+            <marker
+              id="roseArrow"
+              markerWidth="10"
+              markerHeight="7"
+              refX="9"
+              refY="3.5"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill="#fb7185" />
+            </marker>
+          </defs>
+
+          <rect width="1120" height="760" fill="#020617" />
+          <rect width="1120" height="760" fill="url(#grid)" />
+
+          <!-- Connections drawn behind component boxes -->
+          <path
+            d="M 160 160 C 220 160, 226 160, 286 160"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 440 160 C 506 160, 510 160, 576 160"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 730 160 C 800 160, 808 160, 878 160"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 660 210 C 660 262, 660 284, 660 336"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 660 456 C 660 514, 660 534, 660 592"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 730 396 C 785 396, 790 396, 846 396"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 576 396 C 502 396, 490 396, 416 396"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 986 396 C 1028 396, 1036 420, 1036 470 C 1036 540, 974 592, 912 592"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 576 646 C 512 646, 504 646, 440 646"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 300 586 C 300 532, 300 510, 300 456"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 300 336 C 300 282, 300 256, 300 202"
+            fill="none"
+            stroke="#64748b"
+            stroke-width="1.4"
+            marker-end="url(#arrowhead)"
+          />
+          <path
+            d="M 846 352 C 792 322, 760 290, 730 226"
+            fill="none"
+            stroke="#fb7185"
+            stroke-width="1.3"
+            stroke-dasharray="5,4"
+            marker-end="url(#roseArrow)"
+          />
+
+          <!-- Region boundary -->
+          <rect
+            x="42"
+            y="72"
+            width="1036"
+            height="610"
+            rx="12"
+            fill="transparent"
+            stroke="#fbbf24"
+            stroke-width="1.4"
+            stroke-dasharray="8,4"
+          />
+          <text x="60" y="98" fill="#fbbf24" font-size="9" font-weight="600">
+            LOCAL OBSIDIAN VAULT / KNOWLEDGE-BASE REPO
+          </text>
+
+          <!-- Capture lane -->
+          <rect x="70" y="130" width="90" height="60" rx="6" fill="#0f172a" />
+          <rect
+            x="70"
+            y="130"
+            width="90"
+            height="60"
+            rx="6"
+            fill="rgba(8, 51, 68, 0.4)"
+            stroke="#22d3ee"
+            stroke-width="1.5"
+          />
+          <text
+            x="115"
+            y="153"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            YouTube
+          </text>
+          <text
+            x="115"
+            y="169"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            video page
+          </text>
+
+          <rect x="286" y="120" width="154" height="80" rx="6" fill="#0f172a" />
+          <rect
+            x="286"
+            y="120"
+            width="154"
+            height="80"
+            rx="6"
+            fill="rgba(8, 51, 68, 0.4)"
+            stroke="#22d3ee"
+            stroke-width="1.5"
+          />
+          <text
+            x="363"
+            y="146"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            Obsidian Clipper
+          </text>
+          <text
+            x="363"
+            y="164"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            captures title/url/body
+          </text>
+          <text
+            x="363"
+            y="180"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            decision: pending
+          </text>
+
+          <rect x="576" y="120" width="154" height="90" rx="6" fill="#0f172a" />
+          <rect
+            x="576"
+            y="120"
+            width="154"
+            height="90"
+            rx="6"
+            fill="rgba(76, 29, 149, 0.4)"
+            stroke="#a78bfa"
+            stroke-width="1.5"
+          />
+          <text
+            x="653"
+            y="146"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            Raw Source Note
+          </text>
+          <text
+            x="653"
+            y="164"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            Raw/Sources/YouTube
+          </text>
+          <text
+            x="653"
+            y="180"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            source_type: youtube
+          </text>
+          <text
+            x="653"
+            y="196"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            processed: false
+          </text>
+
+          <rect x="878" y="122" width="150" height="76" rx="6" fill="#0f172a" />
+          <rect
+            x="878"
+            y="122"
+            width="150"
+            height="76"
+            rx="6"
+            fill="rgba(30, 41, 59, 0.5)"
+            stroke="#94a3b8"
+            stroke-width="1.5"
+          />
+          <text
+            x="953"
+            y="148"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            Obsidian Bases
+          </text>
+          <text
+            x="953"
+            y="166"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            pending queue
+          </text>
+          <text
+            x="953"
+            y="182"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            scores dashboard
+          </text>
+
+          <!-- Tooling/security group -->
+          <rect
+            x="214"
+            y="304"
+            width="596"
+            height="184"
+            rx="10"
+            fill="transparent"
+            stroke="#fb7185"
+            stroke-width="1.4"
+            stroke-dasharray="4,4"
+          />
+          <text x="232" y="328" fill="#fb7185" font-size="9" font-weight="600">
+            SAFE TRIAGE EXECUTION BOUNDARY
+          </text>
+
+          <rect x="246" y="356" width="140" height="80" rx="6" fill="#0f172a" />
+          <rect
+            x="246"
+            y="356"
+            width="140"
+            height="80"
+            rx="6"
+            fill="rgba(6, 78, 59, 0.4)"
+            stroke="#34d399"
+            stroke-width="1.5"
+          />
+          <text
+            x="316"
+            y="382"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            wiki_tool.py
+          </text>
+          <text
+            x="316"
+            y="400"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            youtube-triage
+          </text>
+          <text
+            x="316"
+            y="416"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            orchestrator
+          </text>
+
+          <rect
+            x="576"
+            y="342"
+            width="154"
+            height="108"
+            rx="6"
+            fill="#0f172a"
+          />
+          <rect
+            x="576"
+            y="342"
+            width="154"
+            height="108"
+            rx="6"
+            fill="rgba(6, 78, 59, 0.4)"
+            stroke="#34d399"
+            stroke-width="1.5"
+          />
+          <text
+            x="653"
+            y="369"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            youtube_triage.py
+          </text>
+          <text
+            x="653"
+            y="388"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            build prompt
+          </text>
+          <text
+            x="653"
+            y="404"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            call provider CLI
+          </text>
+          <text
+            x="653"
+            y="420"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            parse JSON result
+          </text>
+          <text
+            x="653"
+            y="436"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            update source note
+          </text>
+
+          <rect
+            x="846"
+            y="344"
+            width="140"
+            height="104"
+            rx="6"
+            fill="#0f172a"
+          />
+          <rect
+            x="846"
+            y="344"
+            width="140"
+            height="104"
+            rx="6"
+            fill="rgba(30, 41, 59, 0.5)"
+            stroke="#94a3b8"
+            stroke-width="1.5"
+          />
+          <text
+            x="916"
+            y="370"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            Provider CLIs
+          </text>
+          <text
+            x="916"
+            y="389"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            Codex default
+          </text>
+          <text
+            x="916"
+            y="405"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            Gemini optional
+          </text>
+          <text
+            x="916"
+            y="421"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            Claude optional
+          </text>
+          <text
+            x="916"
+            y="437"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            manual prompt mode
+          </text>
+
+          <rect
+            x="508"
+            y="278"
+            width="120"
+            height="20"
+            rx="4"
+            fill="rgba(251, 146, 60, 0.3)"
+            stroke="#fb923c"
+            stroke-width="1"
+          />
+          <text
+            x="568"
+            y="292"
+            fill="#fb923c"
+            font-size="7"
+            text-anchor="middle"
+          >
+            pending scan
+          </text>
+
+          <rect
+            x="750"
+            y="386"
+            width="76"
+            height="20"
+            rx="4"
+            fill="rgba(251, 146, 60, 0.3)"
+            stroke="#fb923c"
+            stroke-width="1"
+          />
+          <text
+            x="788"
+            y="400"
+            fill="#fb923c"
+            font-size="7"
+            text-anchor="middle"
+          >
+            JSON only
+          </text>
+
+          <!-- Validation/output lane -->
+          <rect x="576" y="592" width="154" height="76" rx="6" fill="#0f172a" />
+          <rect
+            x="576"
+            y="592"
+            width="154"
+            height="76"
+            rx="6"
+            fill="rgba(136, 19, 55, 0.4)"
+            stroke="#fb7185"
+            stroke-width="1.5"
+          />
+          <text
+            x="653"
+            y="618"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            JSON Schema
+          </text>
+          <text
+            x="653"
+            y="636"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            youtube-triage
+          </text>
+          <text
+            x="653"
+            y="652"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            strict validation
+          </text>
+
+          <rect x="758" y="586" width="154" height="88" rx="6" fill="#0f172a" />
+          <rect
+            x="758"
+            y="586"
+            width="154"
+            height="88"
+            rx="6"
+            fill="rgba(76, 29, 149, 0.4)"
+            stroke="#a78bfa"
+            stroke-width="1.5"
+          />
+          <text
+            x="835"
+            y="612"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            Scored Source
+          </text>
+          <text
+            x="835"
+            y="630"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            scores + risks
+          </text>
+          <text
+            x="835"
+            y="646"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            decision + reason
+          </text>
+          <text
+            x="835"
+            y="662"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            Triage Notes section
+          </text>
+
+          <rect x="270" y="586" width="170" height="88" rx="6" fill="#0f172a" />
+          <rect
+            x="270"
+            y="586"
+            width="170"
+            height="88"
+            rx="6"
+            fill="rgba(6, 78, 59, 0.4)"
+            stroke="#34d399"
+            stroke-width="1.5"
+          />
+          <text
+            x="355"
+            y="612"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            Maintenance Gate
+          </text>
+          <text
+            x="355"
+            y="630"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            build / source-scan
+          </text>
+          <text
+            x="355"
+            y="646"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            source-lint
+          </text>
+          <text
+            x="355"
+            y="662"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            catalog + manifest
+          </text>
+
+          <rect x="92" y="350" width="138" height="92" rx="6" fill="#0f172a" />
+          <rect
+            x="92"
+            y="350"
+            width="138"
+            height="92"
+            rx="6"
+            fill="rgba(76, 29, 149, 0.4)"
+            stroke="#a78bfa"
+            stroke-width="1.5"
+          />
+          <text
+            x="161"
+            y="376"
+            fill="white"
+            font-size="12"
+            font-weight="600"
+            text-anchor="middle"
+          >
+            Wiki Outputs
+          </text>
+          <text
+            x="161"
+            y="394"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            catalog.jsonl
+          </text>
+          <text
+            x="161"
+            y="410"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            source manifest
+          </text>
+          <text
+            x="161"
+            y="426"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            indexes
+          </text>
+
+          <!-- Legend outside boundary -->
+          <text x="70" y="720" fill="#94a3b8" font-size="8">Legend:</text>
+          <rect
+            x="124"
+            y="710"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(8, 51, 68, 0.4)"
+            stroke="#22d3ee"
+          />
+          <text x="144" y="719" fill="#94a3b8" font-size="8">
+            capture/frontend
+          </text>
+          <rect
+            x="252"
+            y="710"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(6, 78, 59, 0.4)"
+            stroke="#34d399"
+          />
+          <text x="272" y="719" fill="#94a3b8" font-size="8">
+            local tooling
+          </text>
+          <rect
+            x="374"
+            y="710"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(76, 29, 149, 0.4)"
+            stroke="#a78bfa"
+          />
+          <text x="394" y="719" fill="#94a3b8" font-size="8">vault data</text>
+          <rect
+            x="486"
+            y="710"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(136, 19, 55, 0.4)"
+            stroke="#fb7185"
+          />
+          <text x="506" y="719" fill="#94a3b8" font-size="8">
+            validation/security
+          </text>
+          <rect
+            x="632"
+            y="710"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(30, 41, 59, 0.5)"
+            stroke="#94a3b8"
+          />
+          <text x="652" y="719" fill="#94a3b8" font-size="8">
+            external/generic
+          </text>
+        </svg>
+      </main>
+
+      <section class="cards">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-dot cyan"></div>
+            <h3>Capture Boundary</h3>
+          </div>
+          <ul>
+            <li>• Clipper creates factual Raw source metadata only</li>
+            <li>• `decision: pending` keeps judgment out of capture</li>
+            <li>• Bases can display the pending review queue</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-dot emerald"></div>
+            <h3>Triage Execution</h3>
+          </div>
+          <ul>
+            <li>• `wiki_tool.py` orchestrates deterministic workflow</li>
+            <li>
+              • `youtube_triage.py` calls Codex, Gemini, Claude, or manual mode
+            </li>
+            <li>• Providers return JSON only; Python writes files</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-dot violet"></div>
+            <h3>Validated Output</h3>
+          </div>
+          <ul>
+            <li>
+              • Schema enforces scores, risks, decision, reason, expected gain
+            </li>
+            <li>• Raw source gets frontmatter fields and `## Triage Notes`</li>
+            <li>
+              • Catalog, manifest, and lint gate keep vault state consistent
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="footer">
+        Generated for the LLM Wiki YouTube filtering system · Codex default
+        provider · Schema-backed triage
+      </div>
+    </div>
+
+    <script>
+      function toggleToolbar() {
+        document.querySelector(".toolbar").classList.toggle("open");
+      }
+
+      async function captureCanvas() {
+        const target = document.getElementById("report-container");
+        const rect = target.getBoundingClientRect();
+        const padding = 32;
+        return html2canvas(document.body, {
+          x: rect.left + window.scrollX - padding,
+          y: rect.top + window.scrollY - padding,
+          width: rect.width + padding * 2,
+          height: rect.height + padding * 2,
+          scale: 2,
+          backgroundColor: "#020617",
+          ignoreElements: (element) =>
+            element.classList && element.classList.contains("toolbar"),
+        });
+      }
+
+      async function copyAsImage() {
+        const canvas = await captureCanvas();
+        canvas.toBlob(async (blob) => {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob }),
+          ]);
+        }, "image/png");
+        document.querySelector(".toolbar").classList.remove("open");
+      }
+
+      async function downloadPNG() {
+        const canvas = await captureCanvas();
+        const link = document.createElement("a");
+        link.download = "youtube-triage-architecture.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+        document.querySelector(".toolbar").classList.remove("open");
+      }
+
+      async function downloadPDF() {
+        const canvas = await captureCanvas();
+        const imgData = canvas.toDataURL("image/png");
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: canvas.width >= canvas.height ? "landscape" : "portrait",
+          unit: "px",
+          format: [canvas.width, canvas.height],
+        });
+        pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+        pdf.save("youtube-triage-architecture.pdf");
+        document.querySelector(".toolbar").classList.remove("open");
+      }
+    </script>
+  </body>
+</html>
