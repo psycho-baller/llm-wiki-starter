@@ -40,7 +40,9 @@ Lists Raw sources, updates `Schema/source-manifest.jsonl`, shows manifest deltas
 
 ## YouTube Triage Schema
 
-`Schema/youtube-triage-schema.json` defines the structured output expected from AI-backed YouTube triage providers such as Codex, Gemini, or Claude. Providers return the individual scores, risks, decision, confidence, `triage_reason`, and `expected_gain`; `combined_score` is calculated deterministically by Python.
+`Schema/youtube-triage-schema.json` defines the structured output expected from AI-backed YouTube triage providers such as Codex, Gemini, or Claude. Providers return individual scores, risks, decision, confidence, `triage_reason`, `expected_gain`, and structured body fields; `combined_score` is calculated deterministically by Python.
+
+The generated body fields are intentionally short and review-oriented. `what_to_look_for` items must include timestamps or time ranges, and `next_actions` contains 1-3 concrete actions framed as habit stacks, one-time steps, or operating principles.
 
 ## YouTube Triage
 
@@ -56,7 +58,7 @@ python3 scripts/wiki_tool.py youtube-triage --pending --max-body-chars 50000
 
 `youtube-triage` uses Codex by default. Supported providers are `codex`, `gemini`, `claude`, and `manual`.
 
-The AI provider only returns structured JSON. `scripts/wiki_tool.py` validates the output against `Schema/youtube-triage-schema.json`, calculates `combined_score`, writes the scoring fields into the Raw source frontmatter, updates the `## Triage Notes` body section, rebuilds generated Wiki artifacts, and runs source lint.
+The AI provider only returns structured JSON. `scripts/wiki_tool.py` validates the output against `Schema/youtube-triage-schema.json`, calculates `combined_score`, writes the scoring fields into the Raw source frontmatter, renders summary/action sections above the original embed/transcript, rebuilds generated Wiki artifacts, and runs source lint.
 
 By default, YouTube triage passes the full note body/transcript to the AI provider. Use `--max-body-chars` only when you deliberately want to cap prompt size.
 

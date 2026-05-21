@@ -23,7 +23,18 @@ SCORE_FIELDS = (
 )
 RISK_FIELDS = ("redundancy_risk", "time_cost", "clickbait_risk")
 TEXT_FIELDS = ("triage_reason", "expected_gain")
+BODY_FIELDS = ("summary", "skim_plan", "what_to_look_for", "things", "next_actions")
+METADATA_RESULT_FIELDS = (
+    *SCORE_FIELDS,
+    *RISK_FIELDS,
+    "decision",
+    "confidence",
+    "triage_reason",
+    "expected_gain",
+    "combined_score",
+)
 DECISIONS = {"skip", "watch", "skim", "process", "later"}
+DECISION_RANKS = {"skip": 0, "later": 0, "skim": 1, "watch": 2, "process": 3}
 RISK_LEVELS = {"low", "medium", "high"}
 RISK_PENALTIES = {"low": 0, "medium": 1, "high": 2}
 DEFAULT_RAMI_CONTEXT = """Rami is building an LLM Wiki in Obsidian. He wants to filter YouTube videos before watching or processing them. He cares about converting learning into action, rejection therapy, storytelling, communication, courage, habit formation, business/product/AI, and building a useful personal knowledge system."""
@@ -65,7 +76,7 @@ def parse_scalar(value: str) -> Any:
         if inner.lower() == "false":
             return False
         return inner
-    if value.startswith("[") and value.endswith("]"):
+    if value.startswith("[") and value.endswith("]") and not value.startswith("[["):
         inner = value[1:-1].strip()
         if not inner:
             return []
@@ -177,8 +188,59 @@ def validate_result(result: dict[str, Any], schema: dict[str, Any]) -> dict[str,
                 raise TriageError(f"{key} must be >= {spec['minimum']}")
             if "maximum" in spec and value > int(spec["maximum"]):
                 raise TriageError(f"{key} must be <= {spec['maximum']}")
-        if expected_type == "string" and not isinstance(value, str):
-            raise TriageError(f"{key} must be a string")
+        if expected_type == "string":
+            if not isinstance(value, str):
+                raise TriageError(f"{key} must be a string")
+            if "maxLength" in spec and len(value) > int(spec["maxLength"]):
+                raise TriageError(f"{key} must be <= {spec['maxLength']} characters")
+            if "pattern" in spec and not re.search(str(spec["pattern"]), value):
+                raise TriageError(f"{key} must match pattern {spec['pattern']}")
+        if expected_type == "array":
+            if not isinstance(value, list) or not all(
+                isinstance(item, str) for item in value
+            ):
+                raise TriageError(f"{key} must be an array of strings")
+            if "minItems" in spec and len(value) < int(spec["minItems"]):
+                raise TriageError(f"{key} must have at least {spec['minItems']} items")
+            if "maxItems" in spec and len(value) > int(spec["maxItems"]):
+                raise TriageError(f"{key} must have at most {spec['maxItems']} items")
+            item_spec = spec.get("items", {})
+            for index, item in enumerate(value, start=1):
+                if "maxLength" in item_spec and len(item) > int(item_spec["maxLength"]):
+                    raise TriageError(
+                        f"{key}[{index}] must be <= {item_spec['maxLength']} characters"
+                    )
+                if "pattern" in item_spec and not re.search(
+                    str(item_spec["pattern"]), item
+                ):
+                    raise TriageError(
+                        f"{key}[{index}] must match pattern {item_spec['pattern']}"
+                    )
+        if expected_type == "object":
+            if not isinstance(value, dict):
+                raise TriageError(f"{key} must be an object")
+            nested_required = spec.get("required", [])
+            nested_properties = spec.get("properties", {})
+            nested_missing = [
+                nested_key for nested_key in nested_required if nested_key not in value
+            ]
+            if nested_missing:
+                raise TriageError(
+                    f"{key} missing required keys: {', '.join(nested_missing)}"
+                )
+            if spec.get("additionalProperties") is False:
+                nested_extra = sorted(set(value) - set(nested_properties))
+                if nested_extra:
+                    raise TriageError(
+                        f"{key} returned unexpected keys: {', '.join(nested_extra)}"
+                    )
+            for nested_key, nested_value in value.items():
+                nested_spec = nested_properties.get(nested_key, {})
+                if nested_spec.get("type") == "array" and (
+                    not isinstance(nested_value, list)
+                    or not all(isinstance(item, str) for item in nested_value)
+                ):
+                    raise TriageError(f"{key}.{nested_key} must be an array of strings")
         if "enum" in spec and value not in set(spec["enum"]):
             raise TriageError(f"{key} must be one of {spec['enum']}")
     return result
@@ -189,6 +251,32 @@ def calculate_combined_score(result: dict[str, Any]) -> int:
     penalty = sum(RISK_PENALTIES[str(result[field])] for field in RISK_FIELDS)
     adjusted_score = max(0, positive_score - penalty)
     return round((adjusted_score / 30) * 100)
+
+
+def decision_cap_for_score(score: int) -> str:
+    if score >= 75:
+        return "process"
+    if score >= 65:
+        return "watch"
+    if score >= 40:
+        return "skim"
+    return "later"
+
+
+def cap_decision_by_score(result: dict[str, Any]) -> None:
+    """Prevent optimistic decisions that contradict deterministic score inputs."""
+    decision = str(result["decision"])
+    cap = decision_cap_for_score(int(result["combined_score"]))
+    if DECISION_RANKS[decision] <= DECISION_RANKS[cap]:
+        return
+    result["decision"] = cap
+    result["triage_reason"] = (
+        f"Decision downgraded from {decision} to {cap} by deterministic score guard. "
+        + str(result["triage_reason"]).strip()
+    )
+    result["summary"] = (
+        f"Treat this as {cap}, not {decision}: " + str(result["summary"]).strip()
+    )
 
 
 def unquote_env_value(value: str) -> str:
@@ -245,12 +333,14 @@ def build_prompt(
     rami_context: str,
     max_body_chars: int | None = None,
 ) -> str:
-    return textwrap.dedent(
-        f"""
+    return (
+        textwrap.dedent(
+            f"""
         You are scoring whether a YouTube video is worth watching for Rami.
 
         Do not edit files. Do not run commands. Return only valid JSON matching the provided schema.
         Do not include combined_score. It is calculated deterministically by the Python tooling.
+        Return body fields as structured JSON, not markdown. Do not create Recommendation, Why, why_process, or why_not_process sections.
 
         Evaluate whether this video beats the opportunity cost of Rami's attention. Optimize for behavior change, useful judgment, story material, reusable frameworks, and actionability. Be skeptical of redundancy, vague motivation, clickbait, and low-density content. Do not over-score a video just because it is relevant.
 
@@ -261,10 +351,32 @@ def build_prompt(
         - process: high-value source worth compiling into Wiki notes
         - later: maybe valuable, wrong timing
 
+        Decision must be consistent with the scores and risks. Use process only for clearly high-value videos, watch for strong personal value, skim for lightweight extraction, and skip/later when the score inputs are mixed or weak. A deterministic score guard will downgrade overly optimistic decisions.
+
         Confidence means how reliable the triage judgment is, not how good the video is:
         - high: enough transcript/context to judge and the recommendation is stable
         - medium: enough signal to judge but credibility, density, or later sections remain uncertain
         - low: too little evidence, missing transcript, or decision is highly uncertain
+
+        Writing style for body fields:
+        - Be simple, direct, but thorough and personal to Rami.
+        - Tie the value to Rami's real projects and ambitions when the transcript supports it: LLM Wiki, YouTube filtering, rejection therapy, storytelling, comedy/acting/improv, business/product/AI, courage-building, and turning learning into action.
+        - Use timestamps or time ranges whenever possible so Rami can jump directly to the useful parts. If exact timestamps are unavailable, infer approximate ranges from transcript order and mark them with "approx.".
+        - Prefer thorough practical instructions over explanation. Only explain when the context is beneficial
+
+        Body field requirements:
+        - summary: Say what the video is actually useful for and whether it is worth Rami's attention.
+        - skim_plan: How should Rami approach skimming this video. What is the core value that he should strive to extract from it.
+        - what_to_look_for: 3-5 specific items Rami should hunt for/avoid while skimming. Each item must start with a timestamp or time range, for example "12:40-15:10 - ...".
+        - things.people: notable people mentioned; empty list if none.
+        - things.places: notable places mentioned; empty list if none.
+        - things.things_and_concepts: notable objects, ideas, frameworks, concepts, tools, companies, or projects.
+        - next_actions: 1-5 concrete actions Rami should take based on the decision. Make each action fit one of these forms:
+          1. A habit stack: "After [existing routine], I will [tiny action] for [time/amount] because [the deep, powerful why/motivation]."
+          2. A one-time next step: "Do [specific task] in [specific place/tool] before [clear stopping point]."
+          3. A principle: "Use this rule: [short operational rule]."
+
+        Make expected_gain sharp and outcome-oriented. It should say what changes for Rami if he follows the recommendation.
 
         Video source path: {source_path.as_posix()}
         title: {frontmatter.get("title", "")}
@@ -278,7 +390,10 @@ def build_prompt(
         Source body, description, transcript, or excerpt:
         {body_excerpt(body, max_chars=max_body_chars)}
         """
-    ).strip().replace("\n        ", "\n")
+        )
+        .strip()
+        .replace("\n        ", "\n")
+    )
 
 
 def run_command(
@@ -386,43 +501,68 @@ def run_provider(
     raise TriageError(f"unsupported provider: {config.provider}")
 
 
-def render_triage_section(result: dict[str, Any]) -> str:
-    return textwrap.dedent(
-        f"""
-        ## Triage Notes
-
-        - Decision: `{result["decision"]}`
-        - Combined score: `{result["combined_score"]}`
-        - Confidence: `{result["confidence"]}`
-        - Relevance: `{result["relevance_score"]}`
-        - Actionability: `{result["actionability_score"]}`
-        - Novelty: `{result["novelty_score"]}`
-        - Credibility: `{result["credibility_score"]}`
-        - Density: `{result["density_score"]}`
-        - Personal resonance: `{result["personal_resonance_score"]}`
-        - Redundancy risk: `{result["redundancy_risk"]}`
-        - Time cost: `{result["time_cost"]}`
-        - Clickbait risk: `{result["clickbait_risk"]}`
-
-        ### Triage Reason
-
-        {result["triage_reason"]}
-
-        ### Expected Gain
-
-        {result["expected_gain"]}
-        """
-    ).strip()
+def comma_list(items: list[str]) -> str:
+    cleaned = [item.strip() for item in items if item.strip()]
+    return ", ".join(cleaned) if cleaned else "none"
 
 
-def upsert_triage_section(body: str, result: dict[str, Any]) -> str:
-    section = render_triage_section(result)
-    pattern = re.compile(
-        r"(^## Triage Notes\s*$.*?)(?=^## |\Z)", flags=re.MULTILINE | re.DOTALL
+def bullet_list(items: list[str]) -> str:
+    cleaned = [item.strip() for item in items if item.strip()]
+    return "\n".join(f"- {item}" for item in cleaned) if cleaned else "- none"
+
+
+def render_generated_sections(result: dict[str, Any]) -> str:
+    things = result["things"]
+    return "\n\n".join(
+        [
+            "## Summary\n\n" + result["summary"].strip(),
+            "## Skim Plan\n\n" + result["skim_plan"].strip(),
+            "## What To Look For\n\n" + bullet_list(result["what_to_look_for"]),
+            "## Things\n\n"
+            + "\n".join(
+                [
+                    f"- People: {comma_list(things['people'])}",
+                    f"- Places: {comma_list(things['places'])}",
+                    f"- Things & Concepts: {comma_list(things['things_and_concepts'])}",
+                ]
+            ),
+            "## Next Actions\n\n" + bullet_list(result["next_actions"]),
+        ]
     )
-    if pattern.search(body):
-        return pattern.sub(section + "\n\n", body).rstrip() + "\n"
-    return body.rstrip() + "\n\n" + section + "\n"
+
+
+def remove_generated_sections(body: str) -> str:
+    generated_headers = (
+        "Triage Notes",
+        "Summary",
+        "Skim Plan",
+        "What To Look For",
+        "Things",
+        "Next Action",
+        "Next Actions",
+    )
+    pattern = re.compile(
+        rf"^## ({'|'.join(re.escape(header) for header in generated_headers)})\s*$.*?(?=^## |^!\[|\Z)",
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    previous = None
+    cleaned = body
+    while previous != cleaned:
+        previous = cleaned
+        cleaned = pattern.sub("", cleaned)
+    return cleaned.strip()
+
+
+def upsert_generated_sections(body: str, result: dict[str, Any]) -> str:
+    generated = render_generated_sections(result)
+    original = remove_generated_sections(body)
+    if not original:
+        return generated + "\n"
+    return generated + "\n\n" + original.rstrip() + "\n"
+
+
+def frontmatter_result(result: dict[str, Any]) -> dict[str, Any]:
+    return {key: result[key] for key in METADATA_RESULT_FIELDS if key in result}
 
 
 def triage_source(
@@ -436,10 +576,11 @@ def triage_source(
     frontmatter, body = parse_frontmatter(text)
     if str(frontmatter.get("source_type", "")) != "youtube":
         raise TriageError(f"{source_path} is not a YouTube source")
+    source_body = remove_generated_sections(body)
     prompt = build_prompt(
         source_path.relative_to(root),
         frontmatter,
-        body,
+        source_body,
         load_rami_context(root),
         max_body_chars=config.max_body_chars,
     )
@@ -448,11 +589,14 @@ def triage_source(
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     result = validate_result(run_provider(root, schema_path, prompt, config), schema)
     result["combined_score"] = calculate_combined_score(result)
+    cap_decision_by_score(result)
     if dry_run:
         return result
     updated_frontmatter = dict(frontmatter)
-    updated_frontmatter.update(result)
-    updated_body = upsert_triage_section(body, result)
+    for key in BODY_FIELDS:
+        updated_frontmatter.pop(key, None)
+    updated_frontmatter.update(frontmatter_result(result))
+    updated_body = upsert_generated_sections(body, result)
     source_path.write_text(
         dump_frontmatter(updated_frontmatter) + updated_body, encoding="utf-8"
     )

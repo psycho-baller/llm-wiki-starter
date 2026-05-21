@@ -158,7 +158,7 @@ def parse_scalar(value: str) -> Any:
         if inner.lower() == "false":
             return False
         return inner
-    if value.startswith("[") and value.endswith("]"):
+    if value.startswith("[") and value.endswith("]") and not value.startswith("[["):
         inner = value[1:-1].strip()
         if not inner:
             return []
