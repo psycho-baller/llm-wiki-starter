@@ -10,46 +10,48 @@ processed: false
 decision: skim
 published: 2025-12-18
 created: 2026-05-20
-relevance_score: 4
+relevance_score: 5
 actionability_score: 5
 novelty_score: 3
-credibility_score: 4
+credibility_score: 5
 density_score: 4
 personal_resonance_score: 5
 redundancy_risk: high
 time_cost: medium
 clickbait_risk: medium
 confidence: high
-triage_reason: "The core frame matches Rami's existing philosophy that applied knowledge beats accumulated knowledge, but most of the video repackages familiar Hormozi themes: reps, measurement, modeling winners, and faster feedback loops. There is enough useful sharpening around defining learning as behavior change and ignoring vague psychological explanations, but not enough novelty or density to justify full watching or Wiki processing."
-expected_gain: Rami can convert one vague learning goal into a measured practice loop with faster reps, clearer success criteria, and less passive research.
-combined_score: 70
+triage_reason: "The core idea is useful but familiar for Rami: learning means changing behavior, breaking skills into observable parts, tracking reps, and iterating fast. The video is padded with status signaling, sales pitch, repetition, and a motivational luck rant, so it does not deserve a full watch."
+expected_gain: "Rami gets one sharper operational rule for learning projects: define the target behavior, run faster reps, track outputs, and compare top performers against his own top 10%."
+combined_score: 77
 ---
 
 ## Summary
 
-Hormozi defines learning as changing behavior under the same condition, then argues that intelligence can be partly compensated for by increasing iteration speed. The practical process is to deconstruct a broad skill into observable subskills, define success behaviorally, model the top performers, run high-volume reps, and analyze the top 10% of your own outputs. The strongest idea is the anti-black-box rule: stop chasing explanations and focus on visible inputs, outputs, and measurable behavior change.
+Useful as a quick extraction of Hormozi's behavior-change learning framework. Skim the practical middle; skip the intro flex, ad, and late motivation.
 
 ## Skim Plan
 
-Do not watch start to finish. Skim 0:47-9:10 for the learning and skill-decomposition model, 9:55-15:05 for the anti-black-box teaching razor, and 17:42-24:10 for first-party data, top-10% analysis, and iteration speed. Skip the ad read and most of the final luck/Powerball section unless looking for motivational story material.
+Watch 0:47-3:51 for the definition of learning and iteration speed, 5:47-9:10 for skill deconstruction and tracking, 10:07-15:30 for ignoring vague explanations and focusing on observable inputs, and 17:42-24:10 for first-party data and top-10% iteration. Skip 0:00-0:47, 9:10-9:55, and 24:10-30:09 unless you want motivational texture.
 
 ## What To Look For
 
-- The definition of learning as same condition, new behavior
-- How to chunk a vague skill like business, content, or social confidence into observable subskills
-- The rule that good instruction should tell you what to do with your mouth, body, or output
-- The top-10% comparison loop for analyzing your own reps
-- Any phrasing that helps Rami stop learnmaxxing and turn learning into tracked behavior change
+- 0:47-3:51 - Learning = same condition, new behavior; intelligence can be beaten by faster iteration cycles.
+- 5:47-7:15 - Break vague goals like business, content, or charisma into specific observable subskills.
+- 7:27-9:10 - Define success by measurable behaviors and outputs; if it is not tracked, it is probably not being trained.
+- 10:07-15:30 - Ignore hidden psychological explanations; ask what the person physically says or does before the desired outcome.
+- 17:42-24:10 - Use top performers for batch one, then learn from your own top 10% results through repeated reps.
 
 ## Things
 
 - People: Alex Hormozi, Michael Jordan, Amjad Masad, Professor Bergman
 - Places: Vanderbilt, Stanford
-- Things & Concepts: same condition, new behavior, speed of iteration, skill decomposition, observable behavior, black box explanations, first-party data, top 10% analysis, repetition, tracking, modeling top performers, $100M Scaling Roadmap, Replit, Guinness World Record
+- Things & Concepts: learning as same condition, new behavior, iteration speed, skill deconstruction, generalizable skills, specific skills, define success, tracking, ignore the black box, observable inputs and outputs, top 10% comparison, first-party data, repetition, luck as a useless explanation, $100M Scaling Roadmap, Replit, Instagram reels
 
-## Next Action
+## Next Actions
 
-Pick one active skill, such as social confidence, content creation, or app-building, and write a 10-rep practice loop with one observable success metric before consuming another learning video.
+- Use this rule: Never say "I want to get better at X" without naming the exact behavior, output metric, and next 10 reps.
+- Do one skill breakdown for Chalant Society content in Obsidian before opening another learning video.
+- After the morning planning session, I will choose one skill rep to track for 10 minutes.
 
 ![](https://www.youtube.com/watch?v=q9qBqnhdWKw)
 

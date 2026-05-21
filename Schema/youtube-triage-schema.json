@@ -106,7 +106,7 @@
       "maxItems": 5,
       "items": {
         "type": "string",
-        "maxLength": 700
+        "maxLength": 600
       }
     }
   },

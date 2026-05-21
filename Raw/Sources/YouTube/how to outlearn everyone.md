@@ -1,8 +1,8 @@
 ---
 title: how to outlearn everyone
 author:
-  - [[Alex Hormozi]]
-url: "https://www.youtube.com/watch?v=q9qBqnhdWKw"
+  - - - Alex Hormozi
+url: https://www.youtube.com/watch?v=q9qBqnhdWKw
 tags:
   - source
 source_type: youtube
@@ -10,48 +10,50 @@ processed: false
 decision: skim
 published: 2025-12-18
 created: 2026-05-20
-relevance_score: 5
-actionability_score: 5
+relevance_score: 4
+actionability_score: 4
 novelty_score: 3
-credibility_score: 5
-density_score: 4
+credibility_score: 3
+density_score: 3
 personal_resonance_score: 5
 redundancy_risk: high
 time_cost: medium
 clickbait_risk: medium
 confidence: high
-triage_reason: "The core idea is useful but familiar for Rami: learning means changing behavior, breaking skills into observable parts, tracking reps, and iterating fast. The video is padded with status signaling, sales pitch, repetition, and a motivational luck rant, so it does not deserve a full watch."
-expected_gain: "Rami gets one sharper operational rule for learning projects: define the target behavior, run faster reps, track outputs, and compare top performers against his own top 10%."
-combined_score: 77
+triage_reason: "The core message matches Rami's existing philosophy almost too closely: applied knowledge, iteration speed, tracking, and behavior change over passive learning. It is useful as a sharpening reminder, but not novel enough to justify full processing unless Rami wants a compact learning-loop framework for his Wiki."
+expected_gain: "Rami can turn vague learning goals into measurable reps: define the target behavior, copy observable inputs from strong performers, run faster iterations, and track the top 10% of outputs instead of collecting more advice."
+combined_score: 60
 ---
 
 ## Summary
 
-Useful as a quick extraction of Hormozi's behavior-change learning framework. Skim the practical middle; skip the intro flex, ad, and late motivation.
+This video is useful as a practical anti-learnmaxxing reminder: learning means same condition, new behavior; skills need to be broken into observable subskills; progress comes from fast reps, measurement, and studying what top performers actually do. For Rami, the value is mainly in applying it to content creation, improv, rejection therapy, and product-building feedback loops. It is not worth a full watch by default because much of it repeats principles Rami already believes, with Hormozi-style motivational wrapping. Skim for the operational parts and ignore the status claims and broad monほup
 
 ## Skim Plan
 
-Watch 0:47-3:51 for the definition of learning and iteration speed, 5:47-9:10 for skill deconstruction and tracking, 10:07-15:30 for ignoring vague explanations and focusing on observable inputs, and 17:42-24:10 for first-party data and top-10% iteration. Skip 0:00-0:47, 9:10-9:55, and 24:10-30:09 unless you want motivational texture.
+Skim the first 24 minutes and stop once the framework is clear. Extract one reusable checklist: define the skill, chunk it down, define observable success, model top performers, run reps, compare the top 10% of outputs, iterate. Apply it immediately to one live Rami project, preferably YouTube filtering, Chalant Society social reps, or content creation. Skip the Powerball/luck section unless Rami wants motivational story material.
 
 ## What To Look For
 
-- 0:47-3:51 - Learning = same condition, new behavior; intelligence can be beaten by faster iteration cycles.
-- 5:47-7:15 - Break vague goals like business, content, or charisma into specific observable subskills.
-- 7:27-9:10 - Define success by measurable behaviors and outputs; if it is not tracked, it is probably not being trained.
-- 10:07-15:30 - Ignore hidden psychological explanations; ask what the person physically says or does before the desired outcome.
-- 17:42-24:10 - Use top performers for batch one, then learn from your own top 10% results through repeated reps.
+- 0:47-3:51 - Capture the definition: learning is same condition, new behavior; intelligence can be beaten by faster iteration speed. Translate this into Rami's rule: do more feedback loops per week, not more research tabs.
+- 3:51-7:15 - Use the skill decomposition section. Replace vague goals like "get better at content" or "get better socially" with subskills such as hook writing, camera presence, initiating conversations, asking playful questions, or shipping one feature.
+- 7:27-9:15 - Pull the tracking rule. If Rami cannot measure the behavior or output, he is probably pretending to care. Use this for focus sessions, rejection therapy reps, video drafts, and app-building iterations.
+- 9:55-15:30 - Keep the "ignore the black box" razor. Hunt for advice that tells Rami what to do with his mouth, body, screen, product, or schedule; avoid advice that only explains psychology without an observable behavior.
+- 17:42-23:41 - Extract the first-party data loop: study top performers first, run volume, identify the top 10% of your own attempts, infer differences, then repeat. This is the most useful part for content, comedy, and product iteration.
 
 ## Things
 
 - People: Alex Hormozi, Michael Jordan, Amjad Masad, Professor Bergman
 - Places: Vanderbilt, Stanford
-- Things & Concepts: learning as same condition, new behavior, iteration speed, skill deconstruction, generalizable skills, specific skills, define success, tracking, ignore the black box, observable inputs and outputs, top 10% comparison, first-party data, repetition, luck as a useless explanation, $100M Scaling Roadmap, Replit, Instagram reels
+- Things & Concepts: same condition, new behavior, intelligence as speed of learning, skill decomposition, generalizable skills, specific skills, define success, ignore the black box, observable behavior, top 10% analysis, first-party data, iteration speed, repetition as the father of skill, Acquisition.com roadmap, Replit, Guinness World Record, Powerball
 
 ## Next Actions
 
-- Use this rule: Never say "I want to get better at X" without naming the exact behavior, output metric, and next 10 reps.
-- Do one skill breakdown for Chalant Society content in Obsidian before opening another learning video.
-- After the morning planning session, I will choose one skill rep to track for 10 minutes.
+- Use this rule: if learning does not create a changed behavior under the same condition, it is not learning yet.
+- Do a 20-minute skill breakdown in Obsidian before the next deep work block: choose one active skill, list 5 subskills, define one measurable output for each, then stop.
+- After planning the day, I will pick one skill rep to run before reactive work for 10 minutes because Rami becomes the learner he wants to be by closing feedback loops, not collecting more theory.
+- Do a top-10% review in the Focus and Time Tracking system before Sunday night: compare this week's best sessions or outputs against the rest and write 3 observable differences.
+- Use this rule: prefer teachers who can tell you exactly what to do, say, measure, or repeat. Treat vague motivational explanations as low-signal until they become observable behavior.
 
 ![](https://www.youtube.com/watch?v=q9qBqnhdWKw)
 
