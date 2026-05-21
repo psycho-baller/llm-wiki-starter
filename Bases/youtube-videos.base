@@ -53,10 +53,13 @@ views:
         - decision == "pending"
     order:
       - file.name
+      - decision
       - author
       - published
       - created
       - url
+    columnSize:
+      note.decision: 46
   - type: table
     name: Watch Next
     filters:
@@ -68,6 +71,15 @@ views:
       - decision
       - combined_score
       - confidence
+      - relevance_score
+      - actionability_score
+      - novelty_score
+      - credibility_score
+      - density_score
+      - personal_resonance_score
+      - redundancy_risk
+      - time_cost
+      - clickbait_risk
       - expected_gain
       - triage_reason
       - author
@@ -75,6 +87,19 @@ views:
       - url
     summaries:
       combined_score: Average
+    columnSize:
+      note.decision: 46
+      note.combined_score: 44
+      note.confidence: 45
+      note.relevance_score: 57
+      note.actionability_score: 60
+      note.novelty_score: 60
+      note.credibility_score: 73
+      note.density_score: 61
+      note.personal_resonance_score: 50
+      note.redundancy_risk: 46
+      note.time_cost: 67
+      note.clickbait_risk: 65
   - type: table
     name: Skim Queue
     filters:
@@ -82,16 +107,38 @@ views:
         - decision == "skim"
     order:
       - file.name
+      - decision
       - combined_score
       - confidence
-      - expected_gain
-      - triage_reason
+      - relevance_score
+      - actionability_score
+      - novelty_score
+      - credibility_score
+      - density_score
+      - personal_resonance_score
       - redundancy_risk
       - time_cost
       - clickbait_risk
+      - expected_gain
+      - triage_reason
+      - author
+      - published
       - url
     summaries:
       combined_score: Average
+    columnSize:
+      note.decision: 46
+      note.combined_score: 44
+      note.confidence: 45
+      note.relevance_score: 57
+      note.actionability_score: 60
+      note.novelty_score: 60
+      note.credibility_score: 73
+      note.density_score: 61
+      note.personal_resonance_score: 50
+      note.redundancy_risk: 46
+      note.time_cost: 67
+      note.clickbait_risk: 65
   - type: table
     name: High Score
     filters:
@@ -103,15 +150,36 @@ views:
       - file.name
       - decision
       - combined_score
-      - expected_gain
+      - confidence
       - relevance_score
       - actionability_score
       - novelty_score
+      - credibility_score
       - density_score
       - personal_resonance_score
+      - redundancy_risk
+      - time_cost
+      - clickbait_risk
+      - expected_gain
+      - triage_reason
+      - author
+      - published
       - url
     summaries:
       combined_score: Average
+    columnSize:
+      note.decision: 46
+      note.combined_score: 44
+      note.confidence: 45
+      note.relevance_score: 57
+      note.actionability_score: 60
+      note.novelty_score: 60
+      note.credibility_score: 73
+      note.density_score: 61
+      note.personal_resonance_score: 50
+      note.redundancy_risk: 46
+      note.time_cost: 67
+      note.clickbait_risk: 65
   - type: table
     name: Process Candidates
     filters:
@@ -119,11 +187,36 @@ views:
         - decision == "process"
     order:
       - file.name
+      - decision
       - combined_score
+      - confidence
+      - relevance_score
+      - actionability_score
+      - novelty_score
+      - credibility_score
+      - density_score
+      - personal_resonance_score
+      - redundancy_risk
+      - time_cost
+      - clickbait_risk
       - expected_gain
       - triage_reason
-      - processed
+      - author
+      - published
       - url
+    columnSize:
+      note.decision: 46
+      note.combined_score: 44
+      note.confidence: 45
+      note.relevance_score: 57
+      note.actionability_score: 60
+      note.novelty_score: 60
+      note.credibility_score: 73
+      note.density_score: 61
+      note.personal_resonance_score: 50
+      note.redundancy_risk: 46
+      note.time_cost: 67
+      note.clickbait_risk: 65
   - type: table
     name: Later Or Skip
     filters:
@@ -134,11 +227,34 @@ views:
       - file.name
       - decision
       - combined_score
-      - triage_reason
+      - confidence
+      - relevance_score
+      - actionability_score
+      - novelty_score
+      - credibility_score
+      - density_score
+      - personal_resonance_score
       - redundancy_risk
       - time_cost
       - clickbait_risk
+      - expected_gain
+      - triage_reason
+      - author
+      - published
       - url
+    columnSize:
+      note.decision: 46
+      note.combined_score: 44
+      note.confidence: 45
+      note.relevance_score: 57
+      note.actionability_score: 60
+      note.novelty_score: 60
+      note.credibility_score: 73
+      note.density_score: 61
+      note.personal_resonance_score: 50
+      note.redundancy_risk: 46
+      note.time_cost: 67
+      note.clickbait_risk: 65
   - type: table
     name: All YouTube
     order:
