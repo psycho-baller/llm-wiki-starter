@@ -3,6 +3,7 @@ tags:
   - "topic"
 topics: []
 status: seed
+origin: external
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 sources: []

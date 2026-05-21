@@ -15,7 +15,10 @@ python3 scripts/wiki_tool.py search-catalog --query "source topic"
 4. Create or update concise notes under `Wiki/`.
 5. Link every compiled note to Raw source paths in `sources`.
 6. Keep `source_count` equal to the number of `sources`.
-7. Rebuild and validate:
+7. Use lowercase snake_case for frontmatter keys.
+8. Set Raw source `decision` to match the ingest result.
+9. Set compiled note `origin` from cited Raw source `source_type` values: external, personal, or mixed.
+10. Rebuild and validate:
 
 ```bash
 python3 scripts/wiki_tool.py build

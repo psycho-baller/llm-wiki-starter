@@ -4,8 +4,9 @@ tags:
 topics:
   - "llm wiki"
 status: seed
+origin: external
 created: 2026-05-19
-updated: 2026-05-19
+updated: 2026-05-20
 sources:
   - "Raw/Sources/llm-wiki-starter-demo-source.md"
 source_count: 1

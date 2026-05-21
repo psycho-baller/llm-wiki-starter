@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 IGNORED_PARTS = {".git", ".obsidian", "__pycache__"}
+IGNORED_NAMES = {".DS_Store"}
 IGNORED_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".sqlite", ".db"}
 PATTERNS = [
     ("private key", re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----")),
@@ -23,6 +24,8 @@ PATTERNS = [
 
 def should_skip(path: Path) -> bool:
     relative = path.relative_to(ROOT)
+    if path.name in IGNORED_NAMES:
+        return True
     if relative.as_posix() == ".gitignore":
         return True
     if any(part in IGNORED_PARTS for part in relative.parts):

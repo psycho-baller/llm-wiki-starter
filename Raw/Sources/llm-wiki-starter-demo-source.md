@@ -1,13 +1,26 @@
 ---
-Title: "LLM Wiki Starter Demo Source"
-Author: "LLM Wiki Starter"
-Reference: "owned-demo"
-ContentType:
-  - "markdown"
-Created: 2026-05-19
-Processed: false
+title: LLM Wiki Starter Demo Source
+author: LLM Wiki Starter
+url: owned-demo
+source_type: markdown
+created: 2026-05-19
+processed: true
+decision: process
+published:
+relevance_score: 5
+actionability_score: 4
+novelty_score: 3
+credibility_score: 4
+density_score: 4
+personal_resonance_score: 3
+redundancy_risk: low
+time_cost: low
+clickbait_risk: low
+combined_score: 77
+triage_reason: "Starter source is already covered by compiled Wiki notes and remains useful as the core demo fixture."
+expected_gain: "Demonstrates how a Raw source becomes traceable compiled Wiki notes."
 tags:
-  - "source"
+  - source
 ---
 
 # LLM Wiki Starter Demo Source

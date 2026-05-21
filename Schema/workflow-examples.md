@@ -7,10 +7,11 @@
 3. Read related compiled Wiki notes before opening broad Raw context.
 4. Create or update focused notes under `Wiki/`.
 5. Link each compiled note to Raw sources in frontmatter.
-6. Run `python3 scripts/wiki_tool.py build`.
-7. Run `python3 scripts/wiki_tool.py lint`.
-8. Run `python3 scripts/wiki_tool.py source-scan --update --accept-covered`.
-9. Run `python3 scripts/wiki_tool.py source-lint`.
+6. Set the Raw source `decision` to `process` or `skim` when it has been intentionally compiled.
+7. Run `python3 scripts/wiki_tool.py build`.
+8. Run `python3 scripts/wiki_tool.py lint`.
+9. Run `python3 scripts/wiki_tool.py source-scan --update --accept-covered`.
+10. Run `python3 scripts/wiki_tool.py source-lint`.
 
 ## Answer A Question
 

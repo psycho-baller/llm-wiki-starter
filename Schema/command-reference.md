@@ -25,7 +25,7 @@ python3 scripts/wiki_tool.py lint
 python3 scripts/wiki_tool.py source-lint
 ```
 
-Validates compiled Wiki frontmatter, allowed tags, source links, `source_count`, source frontmatter, and processed-source coverage.
+Validates compiled Wiki frontmatter, allowed tags, `origin`, source links, `source_count`, snake_case source frontmatter, source decisions, triage scores, and processed-source coverage.
 
 ## Sources
 

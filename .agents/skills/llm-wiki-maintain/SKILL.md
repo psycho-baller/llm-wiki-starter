@@ -9,6 +9,8 @@ Use this skill for routine upkeep of the LLM Wiki.
 - Update `Schema/source-manifest.jsonl` after new sources are covered.
 - Add short log entries for meaningful changes.
 - Keep generated files committed with the notes they describe.
+- Keep machine-readable frontmatter keys in lowercase snake_case.
+- Keep Raw source `decision` and `processed` fields aligned with source coverage.
 
 ## Commands
 

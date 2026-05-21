@@ -12,6 +12,7 @@ Examples:
 
 Guidelines:
 
+- Use lowercase snake_case for every machine-readable frontmatter key.
 - Keep filenames short enough to scan.
 - Avoid dates unless the note is explicitly a log or time-bound artifact.
 - Avoid vague names such as `notes.md`, `summary.md`, or `misc.md`.

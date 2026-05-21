@@ -7,6 +7,10 @@ This vault uses a two-layer LLM Wiki structure: `Raw/` stores source material, a
 - Treat `Raw/Sources/` as source material, not as compiled notes.
 - Write reusable knowledge only under `Wiki/`.
 - Keep every compiled Wiki note linked to one or more Raw sources through its `sources` frontmatter.
+- Use lowercase snake_case for machine-readable frontmatter keys.
+- Use `source_type` for Raw source format or channel.
+- Use `decision` for Raw source filtering: `pending`, `skip`, `watch`, `skim`, `process`, or `later`.
+- Use deterministic `origin` on compiled Wiki notes: derive it from cited Raw source `source_type` values.
 - Search `Wiki/catalog.jsonl` before opening broad Raw context.
 - Run `python3 scripts/wiki_tool.py build`, `python3 scripts/wiki_tool.py lint`, and `python3 scripts/wiki_tool.py source-lint` before commits.
 - Do not invent citations or create unsupported claims.
@@ -20,7 +24,8 @@ This vault uses a two-layer LLM Wiki structure: `Raw/` stores source material, a
 3. If needed, inspect cited files under `Raw/Sources/`.
 4. Create or update focused notes under `Wiki/Topics/`, `Wiki/Concepts/`, `Wiki/Entities/`, `Wiki/Projects/`, or `Wiki/Logs/`.
 5. Keep `sources` and `source_count` accurate.
-6. Rebuild indexes and run lint/source checks before committing.
+6. Keep Raw source `decision` and `processed` aligned with what actually happened.
+7. Rebuild indexes and run lint/source checks before committing.
 
 ## Public Safety
 

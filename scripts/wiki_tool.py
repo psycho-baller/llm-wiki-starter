@@ -19,6 +19,46 @@ SCHEMA = ROOT / "Schema"
 CATALOG = WIKI / "catalog.jsonl"
 MANIFEST = SCHEMA / "source-manifest.jsonl"
 ALLOWED_TAGS = {"topic", "concept", "entity", "project", "log"}
+ALLOWED_ORIGINS = {"external", "personal", "mixed"}
+SOURCE_TYPE_ORIGINS = {
+    "youtube": "external",
+    "article": "external",
+    "book": "external",
+    "podcast": "external",
+    "markdown": "external",
+    "journal": "personal",
+    "conversation": "personal",
+}
+ALLOWED_DECISIONS = {"pending", "skip", "watch", "skim", "process", "later"}
+RISK_LEVELS = {"low", "medium", "high"}
+SCORE_FIELDS = (
+    "relevance_score",
+    "actionability_score",
+    "novelty_score",
+    "credibility_score",
+    "density_score",
+    "personal_resonance_score",
+)
+RISK_FIELDS = ("redundancy_risk", "time_cost", "clickbait_risk")
+TRIAGE_FIELDS = (
+    *SCORE_FIELDS,
+    *RISK_FIELDS,
+    "combined_score",
+    "triage_reason",
+    "expected_gain",
+)
+LEGACY_SOURCE_KEYS = {
+    "Title",
+    "Author",
+    "Reference",
+    "ContentType",
+    "Created",
+    "Processed",
+    "Ignored",
+    "TriageStatus",
+    "Decision",
+    "SourceType",
+}
 WIKI_FOLDERS = {
     "Topics": "topic",
     "Concepts": "concept",
@@ -150,10 +190,9 @@ def first_heading(body: str, fallback: str) -> str:
 
 
 def note_title(path: Path, frontmatter: dict[str, Any], body: str) -> str:
-    for key in ("title", "Title"):
-        value = frontmatter.get(key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
+    value = frontmatter.get("title")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
     return first_heading(body, path.stem.replace("-", " ").title())
 
 
@@ -178,6 +217,19 @@ def as_list(value: Any) -> list[Any]:
     return [value]
 
 
+def has_value(value: Any) -> bool:
+    return value not in (None, "", [])
+
+
+def int_value(value: Any) -> int | None:
+    if not has_value(value):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def compiled_tag(frontmatter: dict[str, Any]) -> str | None:
     tags = [str(tag) for tag in as_list(frontmatter.get("tags"))]
     allowed = [tag for tag in tags if tag in ALLOWED_TAGS]
@@ -186,18 +238,47 @@ def compiled_tag(frontmatter: dict[str, Any]) -> str | None:
     return None
 
 
+def source_type_for_path(source: str) -> str:
+    source_path = ROOT / source
+    if not source_path.exists():
+        return ""
+    fm, _body = parse_frontmatter(read_text(source_path))
+    return str(fm.get("source_type", ""))
+
+
+def origin_for_source_type(source_type: str) -> str | None:
+    return SOURCE_TYPE_ORIGINS.get(source_type)
+
+
+def derived_origin_for_sources(sources: list[str]) -> str | None:
+    origins = set()
+    for source in sources:
+        source_type = source_type_for_path(source)
+        origin = origin_for_source_type(source_type)
+        if origin is None:
+            return None
+        origins.add(origin)
+    if not origins:
+        return None
+    if len(origins) == 1:
+        return origins.pop()
+    return "mixed"
+
+
 def catalog_entries() -> list[dict[str, Any]]:
     entries: list[dict[str, Any]] = []
     for path in compiled_note_files():
         fm, body = parse_frontmatter(read_text(path))
         tag = compiled_tag(fm) or ""
+        sources = [str(item) for item in as_list(fm.get("sources"))]
         entries.append(
             {
                 "path": rel(path),
                 "title": note_title(path, fm, body),
                 "tag": tag,
+                "origin": derived_origin_for_sources(sources) or str(fm.get("origin", "")),
                 "topics": [str(item) for item in as_list(fm.get("topics"))],
-                "sources": [str(item) for item in as_list(fm.get("sources"))],
+                "sources": sources,
                 "updated": str(fm.get("updated", "")),
                 "aliases": [str(item) for item in as_list(fm.get("aliases"))],
                 "summary": note_summary(body),
@@ -221,14 +302,21 @@ def source_entries(accept_covered: bool = False) -> list[dict[str, Any]]:
         fm, body = parse_frontmatter(read_text(path))
         source_path = rel(path)
         covered_by = coverage.get(source_path, [])
-        processed = bool(fm.get("Processed", False))
+        processed = bool(fm.get("processed", False))
         if accept_covered and covered_by:
             processed = True
         entries.append(
             {
                 "path": source_path,
                 "title": note_title(path, fm, body),
+                "source_type": str(fm.get("source_type", "")),
+                "decision": str(fm.get("decision", "pending")),
                 "processed": processed,
+                **{field: int_value(fm.get(field)) for field in SCORE_FIELDS},
+                **{field: str(fm.get(field, "")) if has_value(fm.get(field)) else "" for field in RISK_FIELDS},
+                "combined_score": int_value(fm.get("combined_score")),
+                "triage_reason": str(fm.get("triage_reason", "")) if has_value(fm.get("triage_reason")) else "",
+                "expected_gain": str(fm.get("expected_gain", "")) if has_value(fm.get("expected_gain")) else "",
                 "covered_by": covered_by,
                 "updated": today(),
             }
@@ -278,6 +366,8 @@ def validate_compiled_note(path: Path) -> list[str]:
     errors: list[str] = []
     fm, _body = parse_frontmatter(read_text(path))
     require(bool(fm), f"{rel(path)} missing frontmatter", errors)
+    for key in LEGACY_SOURCE_KEYS:
+        require(key not in fm, f"{rel(path)} uses legacy non-snake-case key `{key}`", errors)
     tags = [str(tag) for tag in as_list(fm.get("tags"))]
     allowed = [tag for tag in tags if tag in ALLOWED_TAGS]
     require(len(allowed) == 1, f"{rel(path)} must use exactly one allowed compiled tag", errors)
@@ -293,8 +383,14 @@ def validate_compiled_note(path: Path) -> list[str]:
         source_path = ROOT / source
         require(source.startswith("Raw/Sources/"), f"{rel(path)} source `{source}` must be under Raw/Sources/", errors)
         require(source_path.exists(), f"{rel(path)} source `{source}` does not exist", errors)
-    for key in ("topics", "status", "created", "updated", "aliases"):
+    for key in ("topics", "status", "origin", "created", "updated", "aliases"):
         require(key in fm, f"{rel(path)} missing `{key}`", errors)
+    if "origin" in fm:
+        require(str(fm.get("origin")) in ALLOWED_ORIGINS, f"{rel(path)} origin must be one of {sorted(ALLOWED_ORIGINS)}", errors)
+    derived_origin = derived_origin_for_sources(sources)
+    require(derived_origin is not None, f"{rel(path)} origin could not be derived from source_type values", errors)
+    if derived_origin is not None and "origin" in fm:
+        require(str(fm.get("origin")) == derived_origin, f"{rel(path)} origin `{fm.get('origin')}` should be `{derived_origin}` based on cited Raw source_type values", errors)
     return errors
 
 
@@ -315,18 +411,38 @@ def validate_source(path: Path, manifest_by_path: dict[str, dict[str, Any]]) -> 
     fm, _body = parse_frontmatter(read_text(path))
     source_path = rel(path)
     require(bool(fm), f"{source_path} missing frontmatter", errors)
-    for key in ("Title", "Reference", "Created", "Processed", "tags"):
+    for key in LEGACY_SOURCE_KEYS:
+        require(key not in fm, f"{source_path} uses legacy non-snake-case key `{key}`", errors)
+    for key in ("title", "author", "url", "source_type", "created", "processed", "decision", "tags"):
         require(key in fm, f"{source_path} missing `{key}`", errors)
     tags = [str(tag) for tag in as_list(fm.get("tags"))]
     require("source" in tags, f"{source_path} tags must include `source`", errors)
-    source_processed = bool(fm.get("Processed", False))
+    if "decision" in fm:
+        require(str(fm.get("decision")) in ALLOWED_DECISIONS, f"{source_path} decision must be one of {sorted(ALLOWED_DECISIONS)}", errors)
+    source_processed = bool(fm.get("processed", False))
     manifest_entry = manifest_by_path.get(source_path, {})
     covered_by = as_list(manifest_entry.get("covered_by"))
     manifest_processed = bool(manifest_entry.get("processed", False))
     if source_processed:
-        require(bool(covered_by), f"{source_path} is Processed but has no Wiki coverage", errors)
+        require(bool(covered_by), f"{source_path} is processed but has no Wiki coverage", errors)
     if manifest_processed:
         require(bool(covered_by), f"{source_path} manifest is processed but has no Wiki coverage", errors)
+    if str(fm.get("decision", "pending")) != "pending":
+        for key in TRIAGE_FIELDS:
+            require(key in fm, f"{source_path} triaged source missing `{key}`", errors)
+    for key in SCORE_FIELDS:
+        score = int_value(fm.get(key))
+        if score is not None:
+            require(1 <= score <= 5, f"{source_path} {key} must be between 1 and 5", errors)
+    combined_score = int_value(fm.get("combined_score"))
+    if combined_score is not None:
+        require(0 <= combined_score <= 100, f"{source_path} combined_score must be between 0 and 100", errors)
+    for key in RISK_FIELDS:
+        value = fm.get(key)
+        if has_value(value):
+            require(str(value) in RISK_LEVELS, f"{source_path} {key} must be one of {sorted(RISK_LEVELS)}", errors)
+    if "source_type" in fm:
+        require(str(fm.get("source_type")) in SOURCE_TYPE_ORIGINS, f"{source_path} source_type must be mapped in SOURCE_TYPE_ORIGINS", errors)
     return errors
 
 

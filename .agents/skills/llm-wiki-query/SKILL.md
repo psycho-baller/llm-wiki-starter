@@ -16,3 +16,5 @@ python3 scripts/wiki_tool.py search-catalog --query "user question"
 5. Cite compiled Wiki note paths and Raw source paths for source-backed answers.
 
 Prefer compiled notes over broad Raw source reading.
+
+Use Raw source `source_type` and deterministic compiled note `origin` metadata to distinguish personal notes, external media, articles, videos, and mixed-source compiled notes.

@@ -20,3 +20,5 @@ python3 scripts/wiki_tool.py source-lint
 ```
 
 Fix failures before committing.
+
+The canonical metadata style is lowercase snake_case. Legacy source fields such as `Title`, `ContentType`, or `Processed` should be migrated before linting.
