@@ -48,6 +48,7 @@ TRIAGE_FIELDS = (
     *SCORE_FIELDS,
     *RISK_FIELDS,
     "combined_score",
+    "confidence",
     "triage_reason",
     "expected_gain",
 )
@@ -329,6 +330,7 @@ def source_entries(accept_covered: bool = False) -> list[dict[str, Any]]:
                 **{field: int_value(fm.get(field)) for field in SCORE_FIELDS},
                 **{field: str(fm.get(field, "")) if has_value(fm.get(field)) else "" for field in RISK_FIELDS},
                 "combined_score": int_value(fm.get("combined_score")),
+                "confidence": str(fm.get("confidence", "")) if has_value(fm.get("confidence")) else "",
                 "triage_reason": str(fm.get("triage_reason", "")) if has_value(fm.get("triage_reason")) else "",
                 "expected_gain": str(fm.get("expected_gain", "")) if has_value(fm.get("expected_gain")) else "",
                 "covered_by": covered_by,
@@ -455,6 +457,9 @@ def validate_source(path: Path, manifest_by_path: dict[str, dict[str, Any]]) -> 
         value = fm.get(key)
         if has_value(value):
             require(str(value) in RISK_LEVELS, f"{source_path} {key} must be one of {sorted(RISK_LEVELS)}", errors)
+    confidence = fm.get("confidence")
+    if has_value(confidence):
+        require(str(confidence) in RISK_LEVELS, f"{source_path} confidence must be one of {sorted(RISK_LEVELS)}", errors)
     if "source_type" in fm:
         require(str(fm.get("source_type")) in SOURCE_TYPE_ORIGINS, f"{source_path} source_type must be mapped in SOURCE_TYPE_ORIGINS", errors)
     return errors

@@ -25,7 +25,7 @@ RISK_FIELDS = ("redundancy_risk", "time_cost", "clickbait_risk")
 TEXT_FIELDS = ("triage_reason", "expected_gain")
 DECISIONS = {"skip", "watch", "skim", "process", "later"}
 RISK_LEVELS = {"low", "medium", "high"}
-RISK_PENALTIES = {"low": 0, "medium": 2, "high": 4}
+RISK_PENALTIES = {"low": 0, "medium": 1, "high": 2}
 DEFAULT_RAMI_CONTEXT = """Rami is building an LLM Wiki in Obsidian. He wants to filter YouTube videos before watching or processing them. He cares about converting learning into action, rejection therapy, storytelling, communication, courage, habit formation, business/product/AI, and building a useful personal knowledge system."""
 
 
@@ -261,6 +261,11 @@ def build_prompt(
         - process: high-value source worth compiling into Wiki notes
         - later: maybe valuable, wrong timing
 
+        Confidence means how reliable the triage judgment is, not how good the video is:
+        - high: enough transcript/context to judge and the recommendation is stable
+        - medium: enough signal to judge but credibility, density, or later sections remain uncertain
+        - low: too little evidence, missing transcript, or decision is highly uncertain
+
         Video source path: {source_path.as_posix()}
         title: {frontmatter.get("title", "")}
         author: {frontmatter.get("author", "")}
@@ -388,6 +393,7 @@ def render_triage_section(result: dict[str, Any]) -> str:
 
         - Decision: `{result["decision"]}`
         - Combined score: `{result["combined_score"]}`
+        - Confidence: `{result["confidence"]}`
         - Relevance: `{result["relevance_score"]}`
         - Actionability: `{result["actionability_score"]}`
         - Novelty: `{result["novelty_score"]}`

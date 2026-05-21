@@ -66,6 +66,14 @@
         "later"
       ]
     },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
     "triage_reason": {
       "type": "string"
     },
@@ -84,6 +92,7 @@
     "time_cost",
     "clickbait_risk",
     "decision",
+    "confidence",
     "triage_reason",
     "expected_gain"
   ]

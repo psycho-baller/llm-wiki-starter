@@ -40,7 +40,7 @@ Lists Raw sources, updates `Schema/source-manifest.jsonl`, shows manifest deltas
 
 ## YouTube Triage Schema
 
-`Schema/youtube-triage-schema.json` defines the structured output expected from AI-backed YouTube triage providers such as Codex, Gemini, or Claude. Providers return the individual scores, risks, decision, `triage_reason`, and `expected_gain`; `combined_score` is calculated deterministically by Python.
+`Schema/youtube-triage-schema.json` defines the structured output expected from AI-backed YouTube triage providers such as Codex, Gemini, or Claude. Providers return the individual scores, risks, decision, confidence, `triage_reason`, and `expected_gain`; `combined_score` is calculated deterministically by Python.
 
 ## YouTube Triage
 

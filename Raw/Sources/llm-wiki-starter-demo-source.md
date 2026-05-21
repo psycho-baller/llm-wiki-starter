@@ -6,6 +6,7 @@ source_type: markdown
 created: 2026-05-19
 processed: true
 decision: process
+confidence: high
 published:
 relevance_score: 5
 actionability_score: 4

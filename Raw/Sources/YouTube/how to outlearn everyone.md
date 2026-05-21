@@ -8,6 +8,7 @@ tags:
 source_type: youtube
 processed: false
 decision: skim
+confidence: medium
 published: 2025-12-18
 created: 2026-05-20
 relevance_score: 4
