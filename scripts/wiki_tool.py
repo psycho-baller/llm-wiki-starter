@@ -144,9 +144,19 @@ def parse_scalar(value: str) -> Any:
     if value.lower() == "false":
         return False
     if value.startswith('"') and value.endswith('"'):
-        return value[1:-1]
+        inner = value[1:-1]
+        if inner.lower() == "true":
+            return True
+        if inner.lower() == "false":
+            return False
+        return inner
     if value.startswith("'") and value.endswith("'"):
-        return value[1:-1]
+        inner = value[1:-1]
+        if inner.lower() == "true":
+            return True
+        if inner.lower() == "false":
+            return False
+        return inner
     if value.startswith("[") and value.endswith("]"):
         inner = value[1:-1].strip()
         if not inner:

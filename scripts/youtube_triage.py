@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -11,7 +12,6 @@ import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
 
 SCORE_FIELDS = (
     "relevance_score",
@@ -26,6 +26,7 @@ TEXT_FIELDS = ("triage_reason", "expected_gain")
 DECISIONS = {"skip", "watch", "skim", "process", "later"}
 RISK_LEVELS = {"low", "medium", "high"}
 RISK_PENALTIES = {"low": 0, "medium": 2, "high": 4}
+DEFAULT_RAMI_CONTEXT = """Rami is building an LLM Wiki in Obsidian. He wants to filter YouTube videos before watching or processing them. He cares about converting learning into action, rejection therapy, storytelling, communication, courage, habit formation, business/product/AI, and building a useful personal knowledge system."""
 
 
 class TriageError(Exception):
@@ -50,9 +51,19 @@ def parse_scalar(value: str) -> Any:
     if value.lower() == "false":
         return False
     if value.startswith('"') and value.endswith('"'):
-        return value[1:-1]
+        inner = value[1:-1]
+        if inner.lower() == "true":
+            return True
+        if inner.lower() == "false":
+            return False
+        return inner
     if value.startswith("'") and value.endswith("'"):
-        return value[1:-1]
+        inner = value[1:-1]
+        if inner.lower() == "true":
+            return True
+        if inner.lower() == "false":
+            return False
+        return inner
     if value.startswith("[") and value.endswith("]"):
         inner = value[1:-1].strip()
         if not inner:
@@ -150,7 +161,9 @@ def validate_result(result: dict[str, Any], schema: dict[str, Any]) -> dict[str,
         raise TriageError(f"provider returned unexpected keys: {', '.join(extra)}")
     missing = [key for key in required if key not in result]
     if missing:
-        raise TriageError(f"provider result missing required keys: {', '.join(missing)}")
+        raise TriageError(
+            f"provider result missing required keys: {', '.join(missing)}"
+        )
     for key, spec in properties.items():
         if key not in result:
             continue
@@ -177,6 +190,44 @@ def calculate_combined_score(result: dict[str, Any]) -> int:
     return round((adjusted_score / 30) * 100)
 
 
+def unquote_env_value(value: str) -> str:
+    value = value.strip()
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
+        return value[1:-1]
+    return value
+
+
+def load_env_file(root: Path) -> None:
+    env_path = root / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        os.environ[key] = unquote_env_value(value)
+
+
+def load_rami_context(root: Path, max_chars: int = 8000) -> str:
+    load_env_file(root)
+    context_path = os.environ.get("RAMI_CONTEXT_PATH", "").strip()
+    if not context_path:
+        return DEFAULT_RAMI_CONTEXT
+    path = Path(context_path).expanduser()
+    if not path.exists():
+        raise TriageError(f"RAMI_CONTEXT_PATH does not exist: {context_path}")
+    text = path.read_text(encoding="utf-8").strip()
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars].rsplit("\n", 1)[0].strip() + "\n\n[context truncated]"
+
+
 def body_excerpt(body: str, max_chars: int = 6000) -> str:
     body = body.strip()
     if len(body) <= max_chars:
@@ -184,7 +235,9 @@ def body_excerpt(body: str, max_chars: int = 6000) -> str:
     return body[:max_chars].rsplit("\n", 1)[0].strip() + "\n\n[excerpt truncated]"
 
 
-def build_prompt(source_path: Path, frontmatter: dict[str, Any], body: str) -> str:
+def build_prompt(
+    source_path: Path, frontmatter: dict[str, Any], body: str, rami_context: str
+) -> str:
     return textwrap.dedent(
         f"""
         You are scoring whether a YouTube video is worth watching for Rami.
@@ -208,15 +261,17 @@ def build_prompt(source_path: Path, frontmatter: dict[str, Any], body: str) -> s
         published: {frontmatter.get("published", "")}
 
         Rami context:
-        Rami is building an LLM Wiki in Obsidian. He wants to filter YouTube videos before watching or processing them. He cares about converting learning into action, rejection therapy, storytelling, communication, courage, habit formation, business/product/AI, and building a useful personal knowledge system.
+        {rami_context}
 
         Source body, description, transcript, or excerpt:
         {body_excerpt(body)}
         """
-    ).strip()
+    ).strip().replace("\n        ", "\n")
 
 
-def run_command(cmd: list[str], prompt: str | None, timeout: int) -> subprocess.CompletedProcess[str]:
+def run_command(
+    cmd: list[str], prompt: str | None, timeout: int
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         cmd,
         input=prompt,
@@ -227,8 +282,12 @@ def run_command(cmd: list[str], prompt: str | None, timeout: int) -> subprocess.
     )
 
 
-def run_codex(root: Path, schema_path: Path, prompt: str, config: ProviderConfig) -> dict[str, Any]:
-    with tempfile.NamedTemporaryFile(prefix="youtube_triage_", suffix=".json", delete=False) as handle:
+def run_codex(
+    root: Path, schema_path: Path, prompt: str, config: ProviderConfig
+) -> dict[str, Any]:
+    with tempfile.NamedTemporaryFile(
+        prefix="youtube_triage_", suffix=".json", delete=False
+    ) as handle:
         output_path = Path(handle.name)
     cmd = [
         "codex",
@@ -248,25 +307,37 @@ def run_codex(root: Path, schema_path: Path, prompt: str, config: ProviderConfig
         cmd[2:2] = ["--model", config.model]
     completed = run_command(cmd, prompt, config.timeout)
     if completed.returncode != 0:
-        raise TriageError(f"codex failed: {completed.stderr.strip() or completed.stdout.strip()}")
-    text = output_path.read_text(encoding="utf-8") if output_path.exists() else completed.stdout
+        raise TriageError(
+            f"codex failed: {completed.stderr.strip() or completed.stdout.strip()}"
+        )
+    text = (
+        output_path.read_text(encoding="utf-8")
+        if output_path.exists()
+        else completed.stdout
+    )
     output_path.unlink(missing_ok=True)
     return parse_json_from_text(text)
 
 
-def run_gemini(_root: Path, _schema_path: Path, prompt: str, config: ProviderConfig) -> dict[str, Any]:
+def run_gemini(
+    _root: Path, _schema_path: Path, prompt: str, config: ProviderConfig
+) -> dict[str, Any]:
     cmd = ["gemini", "--prompt", prompt, "--output-format", "json"]
     if config.model:
         cmd[1:1] = ["--model", config.model]
     completed = run_command(cmd, None, config.timeout)
     if completed.returncode != 0:
-        raise TriageError(f"gemini failed: {completed.stderr.strip() or completed.stdout.strip()}")
+        raise TriageError(
+            f"gemini failed: {completed.stderr.strip() or completed.stdout.strip()}"
+        )
     outer = parse_json_from_text(completed.stdout)
     response = outer.get("response", completed.stdout)
     return parse_json_from_text(str(response))
 
 
-def run_claude(_root: Path, schema_path: Path, prompt: str, config: ProviderConfig) -> dict[str, Any]:
+def run_claude(
+    _root: Path, schema_path: Path, prompt: str, config: ProviderConfig
+) -> dict[str, Any]:
     schema_text = schema_path.read_text(encoding="utf-8")
     cmd = [
         "claude",
@@ -282,13 +353,17 @@ def run_claude(_root: Path, schema_path: Path, prompt: str, config: ProviderConf
     cmd.append(prompt)
     completed = run_command(cmd, None, config.timeout)
     if completed.returncode != 0:
-        raise TriageError(f"claude failed: {completed.stderr.strip() or completed.stdout.strip()}")
+        raise TriageError(
+            f"claude failed: {completed.stderr.strip() or completed.stdout.strip()}"
+        )
     outer = parse_json_from_text(completed.stdout)
     response = outer.get("result", completed.stdout)
     return parse_json_from_text(str(response))
 
 
-def run_provider(root: Path, schema_path: Path, prompt: str, config: ProviderConfig) -> dict[str, Any]:
+def run_provider(
+    root: Path, schema_path: Path, prompt: str, config: ProviderConfig
+) -> dict[str, Any]:
     provider = config.provider.lower()
     if provider == "codex":
         return run_codex(root, schema_path, prompt, config)
@@ -329,7 +404,9 @@ def render_triage_section(result: dict[str, Any]) -> str:
 
 def upsert_triage_section(body: str, result: dict[str, Any]) -> str:
     section = render_triage_section(result)
-    pattern = re.compile(r"(^## Triage Notes\s*$.*?)(?=^## |\Z)", flags=re.MULTILINE | re.DOTALL)
+    pattern = re.compile(
+        r"(^## Triage Notes\s*$.*?)(?=^## |\Z)", flags=re.MULTILINE | re.DOTALL
+    )
     if pattern.search(body):
         return pattern.sub(section + "\n\n", body).rstrip() + "\n"
     return body.rstrip() + "\n\n" + section + "\n"
@@ -346,7 +423,9 @@ def triage_source(
     frontmatter, body = parse_frontmatter(text)
     if str(frontmatter.get("source_type", "")) != "youtube":
         raise TriageError(f"{source_path} is not a YouTube source")
-    prompt = build_prompt(source_path.relative_to(root), frontmatter, body)
+    prompt = build_prompt(
+        source_path.relative_to(root), frontmatter, body, load_rami_context(root)
+    )
     if config.provider == "manual":
         return {"prompt": prompt}
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -357,5 +436,7 @@ def triage_source(
     updated_frontmatter = dict(frontmatter)
     updated_frontmatter.update(result)
     updated_body = upsert_triage_section(body, result)
-    source_path.write_text(dump_frontmatter(updated_frontmatter) + updated_body, encoding="utf-8")
+    source_path.write_text(
+        dump_frontmatter(updated_frontmatter) + updated_body, encoding="utf-8"
+    )
     return result

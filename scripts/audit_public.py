@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 IGNORED_PARTS = {".git", ".obsidian", "__pycache__"}
-IGNORED_NAMES = {".DS_Store"}
+IGNORED_NAMES = {".DS_Store", ".env", ".env.local"}
 IGNORED_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".sqlite", ".db"}
 PATTERNS = [
     ("private key", re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----")),

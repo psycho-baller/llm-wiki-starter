@@ -57,6 +57,18 @@ python3 scripts/wiki_tool.py youtube-triage --pending --provider manual
 
 The AI provider only returns structured JSON. `scripts/wiki_tool.py` validates the output against `Schema/youtube-triage-schema.json`, calculates `combined_score`, writes the scoring fields into the Raw source frontmatter, updates the `## Triage Notes` body section, rebuilds generated Wiki artifacts, and runs source lint.
 
+Set `RAMI_CONTEXT_PATH` to inject Rami's personal context into the triage prompt. The tool reads this from the shell environment or an ignored root `.env` file.
+
+```bash
+RAMI_CONTEXT_PATH="/absolute/path/to/rami-context.md" python3 scripts/wiki_tool.py youtube-triage --pending
+```
+
+Root `.env` example:
+
+```bash
+RAMI_CONTEXT_PATH="/absolute/path/to/rami-context.md"
+```
+
 ## Search
 
 ```bash
