@@ -152,16 +152,19 @@ This does not need to become rigid math. The model should produce a judgment wit
 Practical rubric:
 
 ```yaml
-relevance: 1-5
-actionability: 1-5
-novelty: 1-5
-credibility: 1-5
-density: 1-5
-personal_resonance: 1-5
+relevance_score: 1-5
+actionability_score: 1-5
+novelty_score: 1-5
+credibility_score: 1-5
+density_score: 1-5
+personal_resonance_score: 1-5
 time_cost: low | medium | high
-redundancy: low | medium | high
-recommendation: skip | watch | skim | process | later
-reason: ""
+redundancy_risk: low | medium | high
+clickbait_risk: low | medium | high
+combined_score: 0-100
+decision: skip | watch | skim | process | later
+triage_reason: ""
+expected_gain: ""
 ```
 
 ## Key Question
