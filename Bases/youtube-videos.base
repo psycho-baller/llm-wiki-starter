@@ -1,0 +1,175 @@
+filters:
+  and:
+    - file.ext == "md"
+    - source_type == "youtube"
+    - not:
+        - file.inFolder("_templates")
+properties:
+  title:
+    displayName: Title
+  author:
+    displayName: Author
+  decision:
+    displayName: Decision
+  combined_score:
+    displayName: Score
+  confidence:
+    displayName: Confidence
+  relevance_score:
+    displayName: Relevance
+  actionability_score:
+    displayName: Actionability
+  novelty_score:
+    displayName: Novelty
+  credibility_score:
+    displayName: Credibility
+  density_score:
+    displayName: Density
+  personal_resonance_score:
+    displayName: Personal
+  redundancy_risk:
+    displayName: Redundancy
+  time_cost:
+    displayName: Time Cost
+  clickbait_risk:
+    displayName: Clickbait
+  expected_gain:
+    displayName: Expected Gain
+  triage_reason:
+    displayName: Triage Reason
+  published:
+    displayName: Published
+  created:
+    displayName: Captured
+  processed:
+    displayName: Processed
+  url:
+    displayName: URL
+views:
+  - type: table
+    name: Triage Inbox
+    filters:
+      and:
+        - decision == "pending"
+    order:
+      - file.name
+      - author
+      - published
+      - created
+      - url
+  - type: table
+    name: Watch Next
+    filters:
+      or:
+        - decision == "watch"
+        - decision == "process"
+    order:
+      - file.name
+      - decision
+      - combined_score
+      - confidence
+      - expected_gain
+      - triage_reason
+      - author
+      - published
+      - url
+    summaries:
+      combined_score: Average
+  - type: table
+    name: Skim Queue
+    filters:
+      and:
+        - decision == "skim"
+    order:
+      - file.name
+      - combined_score
+      - confidence
+      - expected_gain
+      - triage_reason
+      - redundancy_risk
+      - time_cost
+      - clickbait_risk
+      - url
+    summaries:
+      combined_score: Average
+  - type: table
+    name: High Score
+    filters:
+      and:
+        - combined_score >= 70
+        - decision != "skip"
+        - decision != "later"
+    order:
+      - file.name
+      - decision
+      - combined_score
+      - expected_gain
+      - relevance_score
+      - actionability_score
+      - novelty_score
+      - density_score
+      - personal_resonance_score
+      - url
+    summaries:
+      combined_score: Average
+  - type: table
+    name: Process Candidates
+    filters:
+      and:
+        - decision == "process"
+    order:
+      - file.name
+      - combined_score
+      - expected_gain
+      - triage_reason
+      - processed
+      - url
+  - type: table
+    name: Later Or Skip
+    filters:
+      or:
+        - decision == "later"
+        - decision == "skip"
+    order:
+      - file.name
+      - decision
+      - combined_score
+      - triage_reason
+      - redundancy_risk
+      - time_cost
+      - clickbait_risk
+      - url
+  - type: table
+    name: All YouTube
+    order:
+      - file.name
+      - decision
+      - combined_score
+      - confidence
+      - relevance_score
+      - actionability_score
+      - novelty_score
+      - credibility_score
+      - density_score
+      - personal_resonance_score
+      - redundancy_risk
+      - time_cost
+      - clickbait_risk
+      - expected_gain
+      - triage_reason
+      - author
+      - published
+      - url
+    columnSize:
+      note.decision: 46
+      note.combined_score: 44
+      note.confidence: 45
+      note.relevance_score: 57
+      note.actionability_score: 60
+      note.novelty_score: 60
+      note.credibility_score: 73
+      note.density_score: 61
+      note.personal_resonance_score: 50
+      note.redundancy_risk: 46
+      note.time_cost: 67
+      note.clickbait_risk: 65
