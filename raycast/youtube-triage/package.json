@@ -1,0 +1,112 @@
+{
+  "name": "youtube-triage",
+  "title": "YouTube Triage",
+  "description": "Process pending YouTube sources in the LLM Wiki vault.",
+  "icon": "icon.png",
+  "author": "rami",
+  "platforms": ["macOS"],
+  "categories": ["Productivity"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "process-pending",
+      "title": "Process Pending YouTube Videos",
+      "description": "Run the vault's pending YouTube triage workflow.",
+      "mode": "view",
+      "keywords": ["youtube", "triage", "wiki", "obsidian"]
+    }
+  ],
+  "preferences": [
+    {
+      "name": "vaultPath",
+      "title": "Vault Path",
+      "description": "Absolute path to the knowledge-base vault.",
+      "type": "directory",
+      "required": true
+    },
+    {
+      "name": "provider",
+      "title": "Triage Provider",
+      "description": "AI provider passed to scripts/wiki_tool.py youtube-triage.",
+      "type": "dropdown",
+      "required": true,
+      "default": "codex",
+      "data": [
+        { "title": "Codex", "value": "codex" },
+        { "title": "Gemini", "value": "gemini" },
+        { "title": "Claude", "value": "claude" },
+        { "title": "Manual Prompt", "value": "manual" }
+      ]
+    },
+    {
+      "name": "model",
+      "title": "Model Override",
+      "description": "Optional provider model override.",
+      "type": "textfield",
+      "required": false,
+      "placeholder": "Leave blank for provider default"
+    },
+    {
+      "name": "limit",
+      "title": "Limit",
+      "description": "Maximum pending videos to process in one run.",
+      "type": "textfield",
+      "required": true,
+      "default": "3"
+    },
+    {
+      "name": "timeout",
+      "title": "Timeout Seconds",
+      "description": "Provider timeout in seconds for each triage call.",
+      "type": "textfield",
+      "required": true,
+      "default": "300"
+    },
+    {
+      "name": "settleSeconds",
+      "title": "Settle Seconds",
+      "description": "Seconds to wait after pending files are found before processing.",
+      "type": "textfield",
+      "required": true,
+      "default": "15"
+    },
+    {
+      "name": "maxBodyChars",
+      "title": "Max Body Characters",
+      "description": "Optional cap for source body characters sent to the provider.",
+      "type": "textfield",
+      "required": false,
+      "placeholder": "Leave blank for full body"
+    },
+    {
+      "name": "dryRun",
+      "title": "Dry Run",
+      "description": "Print provider results without editing source files.",
+      "type": "checkbox",
+      "required": false,
+      "label": "Do not edit files",
+      "default": false
+    },
+    {
+      "name": "noBuild",
+      "title": "Skip Rebuild",
+      "description": "Skip catalog/source manifest rebuild after updates.",
+      "type": "checkbox",
+      "required": false,
+      "label": "Do not rebuild after triage",
+      "default": false
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "1.104.18"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "dev": "ray develop",
+    "build": "ray build",
+    "lint": "ray lint",
+    "typecheck": "tsc --noEmit"
+  }
+}
