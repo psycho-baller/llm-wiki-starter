@@ -6,6 +6,8 @@ source_type: youtube
 created: YYYY-MM-DD
 processed: false
 decision: pending
+consumption_status: unwatched
+consumed_at:
 published: YYYY-MM-DD
 relevance_score:
 actionability_score:

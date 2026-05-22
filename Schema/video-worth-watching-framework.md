@@ -130,6 +130,15 @@ Decision meanings:
 - `skip`: low expected value.
 - `later`: maybe valuable, but wrong timing.
 
+Consumption is tracked separately from the triage decision:
+
+```yaml
+consumption_status: unwatched | skimmed | watched | abandoned
+consumed_at: YYYY-MM-DD
+```
+
+Keep `consumption_status: unwatched` and `consumed_at:` blank until Rami personally consumes or abandons the video. This keeps the triage judgment separate from actual attention spent.
+
 ## Expected Value Rubric
 
 Do not ask only whether the video is good. Score expected value:

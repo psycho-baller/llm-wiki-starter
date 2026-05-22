@@ -510,7 +510,7 @@
             font-size="9"
             text-anchor="middle"
           >
-            captures title/url/body
+            captures title/url/body/status
           </text>
           <text
             x="363"
@@ -522,12 +522,12 @@
             decision: pending
           </text>
 
-          <rect x="576" y="120" width="154" height="90" rx="6" fill="#0f172a" />
+          <rect x="576" y="120" width="154" height="106" rx="6" fill="#0f172a" />
           <rect
             x="576"
             y="120"
             width="154"
-            height="90"
+            height="106"
             rx="6"
             fill="rgba(76, 29, 149, 0.4)"
             stroke="#a78bfa"
@@ -569,6 +569,15 @@
             text-anchor="middle"
           >
             processed: false
+          </text>
+          <text
+            x="653"
+            y="212"
+            fill="#94a3b8"
+            font-size="9"
+            text-anchor="middle"
+          >
+            consumption: unwatched
           </text>
 
           <rect x="878" y="122" width="150" height="76" rx="6" fill="#0f172a" />
@@ -1097,6 +1106,7 @@
           <ul>
             <li>• Clipper creates factual Raw source metadata only</li>
             <li>• `decision: pending` keeps judgment out of capture</li>
+            <li>• `consumption_status: unwatched` is the default</li>
             <li>• Bases can display the pending review queue</li>
           </ul>
         </div>

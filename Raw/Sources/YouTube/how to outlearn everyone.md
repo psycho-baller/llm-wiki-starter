@@ -8,6 +8,8 @@ tags:
 source_type: youtube
 processed: false
 decision: skim
+consumption_status: unwatched
+consumed_at:
 published: 2025-12-18
 created: 2026-05-20
 relevance_score: 4

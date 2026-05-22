@@ -43,6 +43,10 @@ properties:
     displayName: Captured
   processed:
     displayName: Processed
+  consumption_status:
+    displayName: Consumption
+  consumed_at:
+    displayName: Consumed
   url:
     displayName: URL
 views:
@@ -54,6 +58,7 @@ views:
     order:
       - file.name
       - decision
+      - consumption_status
       - author
       - published
       - created
@@ -63,12 +68,15 @@ views:
   - type: table
     name: Watch Next
     filters:
-      or:
-        - decision == "watch"
-        - decision == "process"
+      and:
+        - consumption_status == "unwatched"
+        - or:
+            - decision == "watch"
+            - decision == "process"
     order:
       - file.name
       - decision
+      - consumption_status
       - combined_score
       - confidence
       - relevance_score
@@ -105,9 +113,11 @@ views:
     filters:
       and:
         - decision == "skim"
+        - consumption_status == "unwatched"
     order:
       - file.name
       - decision
+      - consumption_status
       - combined_score
       - confidence
       - relevance_score
@@ -146,9 +156,11 @@ views:
         - combined_score >= 70
         - decision != "skip"
         - decision != "later"
+        - consumption_status == "unwatched"
     order:
       - file.name
       - decision
+      - consumption_status
       - combined_score
       - confidence
       - relevance_score
@@ -185,9 +197,11 @@ views:
     filters:
       and:
         - decision == "process"
+        - consumption_status == "unwatched"
     order:
       - file.name
       - decision
+      - consumption_status
       - combined_score
       - confidence
       - relevance_score
@@ -226,6 +240,7 @@ views:
     order:
       - file.name
       - decision
+      - consumption_status
       - combined_score
       - confidence
       - relevance_score
@@ -260,6 +275,8 @@ views:
     order:
       - file.name
       - decision
+      - consumption_status
+      - consumed_at
       - combined_score
       - confidence
       - relevance_score

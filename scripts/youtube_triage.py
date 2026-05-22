@@ -595,6 +595,8 @@ def triage_source(
     updated_frontmatter = dict(frontmatter)
     for key in BODY_FIELDS:
         updated_frontmatter.pop(key, None)
+    updated_frontmatter.setdefault("consumption_status", "unwatched")
+    updated_frontmatter.setdefault("consumed_at", None)
     updated_frontmatter.update(frontmatter_result(result))
     updated_body = upsert_generated_sections(body, result)
     source_path.write_text(

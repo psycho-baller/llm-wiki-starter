@@ -117,7 +117,7 @@ Important rules:
 - Do not invent citations.
 - Prefer several focused notes over one copied source summary.
 
-Raw source notes use fields such as `source_type`, `decision`, and `processed` so the vault can track what has been triaged and what still needs attention.
+Raw source notes use fields such as `source_type`, `decision`, and `processed` so the vault can track what has been triaged and what still needs attention. YouTube sources also use `consumption_status` and `consumed_at` so Bases can separate triaged videos from videos Rami has actually watched or skimmed.
 
 ## Agent Use
 

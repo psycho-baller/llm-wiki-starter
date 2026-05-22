@@ -15,6 +15,8 @@ source_type: youtube
 created: YYYY-MM-DD
 processed: false
 decision: pending
+consumption_status: unwatched
+consumed_at:
 published: YYYY-MM-DD
 relevance_score:
 actionability_score:
@@ -36,6 +38,10 @@ tags:
 `processed` means the source is represented by at least one compiled Wiki note and appears in `Schema/source-manifest.jsonl` with non-empty `covered_by`.
 
 `decision` is the source filtering state. Allowed values are `pending`, `skip`, `watch`, `skim`, `process`, and `later`.
+
+For YouTube sources, `consumption_status` tracks whether Rami has personally consumed the video. Allowed values are `unwatched`, `skimmed`, `watched`, and `abandoned`. New YouTube notes should default to `unwatched`.
+
+`consumed_at` is blank while `consumption_status: unwatched`. When `consumption_status` changes to `skimmed`, `watched`, or `abandoned`, set `consumed_at` to a `YYYY-MM-DD` date.
 
 Use `source_type` for the source format or channel, such as `youtube`, `article`, `book`, `podcast`, `journal`, `conversation`, or `markdown`.
 

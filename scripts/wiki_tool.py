@@ -34,6 +34,7 @@ SOURCE_TYPE_ORIGINS = {
     "conversation": "personal",
 }
 ALLOWED_DECISIONS = {"pending", "skip", "watch", "skim", "process", "later"}
+ALLOWED_CONSUMPTION_STATUSES = {"unwatched", "skimmed", "watched", "abandoned"}
 RISK_LEVELS = {"low", "medium", "high"}
 SCORE_FIELDS = (
     "relevance_score",
@@ -320,23 +321,34 @@ def source_entries(accept_covered: bool = False) -> list[dict[str, Any]]:
         processed = bool(fm.get("processed", False))
         if accept_covered and covered_by:
             processed = True
-        entries.append(
-            {
-                "path": source_path,
-                "title": note_title(path, fm, body),
-                "source_type": str(fm.get("source_type", "")),
-                "decision": str(fm.get("decision", "pending")),
-                "processed": processed,
-                **{field: int_value(fm.get(field)) for field in SCORE_FIELDS},
-                **{field: str(fm.get(field, "")) if has_value(fm.get(field)) else "" for field in RISK_FIELDS},
-                "combined_score": int_value(fm.get("combined_score")),
-                "confidence": str(fm.get("confidence", "")) if has_value(fm.get("confidence")) else "",
-                "triage_reason": str(fm.get("triage_reason", "")) if has_value(fm.get("triage_reason")) else "",
-                "expected_gain": str(fm.get("expected_gain", "")) if has_value(fm.get("expected_gain")) else "",
-                "covered_by": covered_by,
-                "updated": today(),
-            }
-        )
+        source_type = str(fm.get("source_type", ""))
+        entry = {
+            "path": source_path,
+            "title": note_title(path, fm, body),
+            "source_type": source_type,
+            "decision": str(fm.get("decision", "pending")),
+            "processed": processed,
+            **{field: int_value(fm.get(field)) for field in SCORE_FIELDS},
+            **{field: str(fm.get(field, "")) if has_value(fm.get(field)) else "" for field in RISK_FIELDS},
+            "combined_score": int_value(fm.get("combined_score")),
+            "confidence": str(fm.get("confidence", "")) if has_value(fm.get("confidence")) else "",
+            "triage_reason": str(fm.get("triage_reason", "")) if has_value(fm.get("triage_reason")) else "",
+            "expected_gain": str(fm.get("expected_gain", "")) if has_value(fm.get("expected_gain")) else "",
+            "covered_by": covered_by,
+            "updated": today(),
+        }
+        if source_type == "youtube":
+            entry["consumption_status"] = (
+                str(fm.get("consumption_status", ""))
+                if has_value(fm.get("consumption_status"))
+                else ""
+            )
+            entry["consumed_at"] = (
+                str(fm.get("consumed_at", ""))
+                if has_value(fm.get("consumed_at"))
+                else ""
+            )
+        entries.append(entry)
     return entries
 
 
@@ -435,6 +447,29 @@ def validate_source(path: Path, manifest_by_path: dict[str, dict[str, Any]]) -> 
     require("source" in tags, f"{source_path} tags must include `source`", errors)
     if "decision" in fm:
         require(str(fm.get("decision")) in ALLOWED_DECISIONS, f"{source_path} decision must be one of {sorted(ALLOWED_DECISIONS)}", errors)
+    source_type = str(fm.get("source_type", ""))
+    if source_type == "youtube":
+        for key in ("consumption_status", "consumed_at"):
+            require(key in fm, f"{source_path} missing `{key}`", errors)
+        consumption_status = str(fm.get("consumption_status", ""))
+        require(
+            consumption_status in ALLOWED_CONSUMPTION_STATUSES,
+            f"{source_path} consumption_status must be one of {sorted(ALLOWED_CONSUMPTION_STATUSES)}",
+            errors,
+        )
+        consumed_at = fm.get("consumed_at")
+        if consumption_status == "unwatched":
+            require(
+                not has_value(consumed_at),
+                f"{source_path} consumed_at should be blank when consumption_status is unwatched",
+                errors,
+            )
+        elif consumption_status in ALLOWED_CONSUMPTION_STATUSES:
+            require(
+                bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(consumed_at))),
+                f"{source_path} consumed_at must be YYYY-MM-DD when consumption_status is {consumption_status}",
+                errors,
+            )
     source_processed = bool(fm.get("processed", False))
     manifest_entry = manifest_by_path.get(source_path, {})
     covered_by = as_list(manifest_entry.get("covered_by"))
@@ -461,7 +496,7 @@ def validate_source(path: Path, manifest_by_path: dict[str, dict[str, Any]]) -> 
     if has_value(confidence):
         require(str(confidence) in RISK_LEVELS, f"{source_path} confidence must be one of {sorted(RISK_LEVELS)}", errors)
     if "source_type" in fm:
-        require(str(fm.get("source_type")) in SOURCE_TYPE_ORIGINS, f"{source_path} source_type must be mapped in SOURCE_TYPE_ORIGINS", errors)
+        require(source_type in SOURCE_TYPE_ORIGINS, f"{source_path} source_type must be mapped in SOURCE_TYPE_ORIGINS", errors)
     return errors
 
 

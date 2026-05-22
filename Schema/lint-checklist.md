@@ -10,8 +10,10 @@ Before committing Wiki changes:
 - Compiled note `sources` point to existing files under `Raw/Sources/`.
 - Compiled note `source_count` equals the number of `sources`.
 - Raw source notes include `title`, `author`, `url`, `source_type`, `created`, `processed`, `decision`, and `tags`.
+- YouTube source notes include `consumption_status` and `consumed_at`.
 - Sources marked `processed: true` have at least one covering Wiki note.
 - Triaged Raw sources use `decision: skip`, `watch`, `skim`, `process`, or `later`.
+- YouTube consumption status uses `unwatched`, `skimmed`, `watched`, or `abandoned`; `consumed_at` is blank only for `unwatched`.
 - Triaged Raw sources include score fields, `combined_score`, `triage_reason`, and `expected_gain`.
 - Source and Wiki metadata keys use lowercase snake_case.
 - Generated indexes and `Wiki/catalog.jsonl` are rebuilt.

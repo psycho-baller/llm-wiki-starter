@@ -1,0 +1,54 @@
+filters:
+  and:
+    - file.ext == "md"
+    - source_type == "youtube"
+    - not:
+        - file.inFolder("_templates")
+    - consumption_status == "unwatched"
+    - or:
+        - decision == "watch"
+        - decision == "skim"
+        - decision == "process"
+properties:
+  title:
+    displayName: Title
+  author:
+    displayName: Author
+  decision:
+    displayName: Decision
+  consumption_status:
+    displayName: Consumption
+  combined_score:
+    displayName: Score
+  confidence:
+    displayName: Confidence
+  expected_gain:
+    displayName: Expected Gain
+  triage_reason:
+    displayName: Triage Reason
+  published:
+    displayName: Published
+  created:
+    displayName: Captured
+  url:
+    displayName: URL
+views:
+  - type: table
+    name: Watch Later
+    order:
+      - file.name
+      - decision
+      - combined_score
+      - confidence
+      - expected_gain
+      - triage_reason
+      - author
+      - published
+      - created
+      - url
+    summaries:
+      combined_score: Average
+    columnSize:
+      note.decision: 48
+      note.combined_score: 46
+      note.confidence: 54
