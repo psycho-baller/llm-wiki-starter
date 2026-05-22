@@ -12,4 +12,43 @@ dist/
 .wiki-runtime/
 Raw/Files/*
 !Raw/Files/.gitkeep
+
+# Public starter allowlist: keep personal source/content notes out of normal
+# public staging. Use `git add -f` only when intentionally changing starter
+# fixtures.
+Raw/Sources/**
+!Raw/Sources/
+!Raw/Sources/YouTube/
+!Raw/Sources/YouTube/how to outlearn everyone.md
+!Raw/Sources/llm-wiki-starter-demo-source.md
+
+Wiki/Concepts/**
+!Wiki/Concepts/
+!Wiki/Concepts/.gitkeep
+!Wiki/Concepts/index.md
+!Wiki/Concepts/raw-vs-compiled-knowledge.md
+
+Wiki/Entities/**
+!Wiki/Entities/
+!Wiki/Entities/.gitkeep
+!Wiki/Entities/index.md
+
+Wiki/Logs/**
+!Wiki/Logs/
+!Wiki/Logs/.gitkeep
+!Wiki/Logs/index.md
+!Wiki/Logs/initial-demo-ingest.md
+
+Wiki/Projects/**
+!Wiki/Projects/
+!Wiki/Projects/.gitkeep
+!Wiki/Projects/index.md
+!Wiki/Projects/build-core-llm-wiki.md
+
+Wiki/Topics/**
+!Wiki/Topics/
+!Wiki/Topics/.gitkeep
+!Wiki/Topics/index.md
+!Wiki/Topics/llm-wiki-workflow.md
+
 Drafts/

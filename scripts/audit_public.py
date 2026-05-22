@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -20,6 +21,27 @@ PATTERNS = [
     ("ssh key path", re.compile(r"\.ssh/(?:id_|config|known_hosts)")),
     ("obsidian plugin/cache state", re.compile(r"\.obsidian/(?:plugins|cache|logs|workspace)")),
 ]
+STARTER_CONTENT_ALLOWLIST = {
+    "Raw/Files/.gitkeep",
+    "Raw/Sources/YouTube/how to outlearn everyone.md",
+    "Raw/Sources/llm-wiki-starter-demo-source.md",
+    "Wiki/Concepts/.gitkeep",
+    "Wiki/Concepts/index.md",
+    "Wiki/Concepts/raw-vs-compiled-knowledge.md",
+    "Wiki/Entities/.gitkeep",
+    "Wiki/Entities/index.md",
+    "Wiki/Logs/.gitkeep",
+    "Wiki/Logs/index.md",
+    "Wiki/Logs/initial-demo-ingest.md",
+    "Wiki/Projects/.gitkeep",
+    "Wiki/Projects/build-core-llm-wiki.md",
+    "Wiki/Projects/index.md",
+    "Wiki/Topics/.gitkeep",
+    "Wiki/Topics/index.md",
+    "Wiki/Topics/llm-wiki-workflow.md",
+    "Wiki/catalog.jsonl",
+    "Wiki/index.md",
+}
 
 
 def should_skip(path: Path) -> bool:
@@ -37,6 +59,16 @@ def should_skip(path: Path) -> bool:
 
 def main() -> int:
     findings: list[str] = []
+    tracked_content = subprocess.check_output(
+        ["git", "ls-files", "Raw", "Wiki"],
+        cwd=ROOT,
+        text=True,
+    ).splitlines()
+    for path in tracked_content:
+        if path not in STARTER_CONTENT_ALLOWLIST:
+            findings.append(
+                f"{path}: tracked Raw/Wiki content is not in the public starter allowlist"
+            )
     for path in sorted(ROOT.rglob("*")):
         if not path.is_file() or should_skip(path):
             continue

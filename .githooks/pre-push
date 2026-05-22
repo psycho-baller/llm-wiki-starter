@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+remote_name="${1:-}"
+remote_url="${2:-}"
+
+case "$remote_name:$remote_url" in
+  origin:*|*:*/llm-wiki-starter.git|*:github.com/psycho-baller/llm-wiki-starter.git)
+    python3 scripts/audit_public.py
+    ;;
+esac
